@@ -1,0 +1,1 @@
+airodump-ng wlan0mon

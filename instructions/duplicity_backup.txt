@@ -1,0 +1,14 @@
+ssh-keygen -t rsa
+(no passphrase)
+(enable password logins on backup machine)
+ssh-copy-id root@targetmachine.com
+(Enter the password for the target)
+ssh root@targetmachine.com
+
+//BACKUP
+//From client machine to backup server
+PASSPHRASE="passphrase_for_GPG" duplicity /home/dirtobebackedup scp://uname@targetmachine.com//usr/backupdir
+
+(place job in crontab -e)
+0 5 * * * sudo PASSPHRASE="wtflol" duplicity /var/www/ scp://root@backup.sellitus.com//root/BACKUP/sellitus.com/var/www/
+0 5 * * * sudo PASSPHRASE="wtflol" duplicity /etc/apache2/ scp://root@backup.sellitus.com//root/BACKUP/sellitus.com/etc/apache2/
