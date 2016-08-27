@@ -1,6 +1,5 @@
 #!/bin/bash
 # User editable options
-standardApps="nano openssh-server htop build-essential python-setuptools python-all-dev ufw fail2ban git sysbench"
 desktopApps="eclipse gedit virtualbox-5.0 steam qbittorrent pycharm-community"
 
 # Initialization
@@ -22,24 +21,33 @@ done
 
 if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
 	echo "Would you like to set this machine up as a server? <Y/n>"
-	serverChoice="y"
+	$serverChoice="y"
 	read serverChoice
 fi
 
 if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 	echo "Would you like to install optional desktop apps? <y/N>"
-	deskChoice="n"
+	$deskChoice="n"
 	read deskChoice
 fi
 
 
 # Initial update
 apt update
-apt -y dist-upgrade
+apt dist-upgrade -y
 
 # Base package install (including down to minimal 14.04)
-apt -y install sudo
-sudo apt --ignore-missing -y install $standardApps
+apt install -y sudo
+sudo apt install -y nano
+sudo apt install -y openssh-server
+sudo apt install -y htop
+sudo apt install -y build-essential
+sudo apt install -y python-setuptools
+sudo apt install -y python-all-dev
+sudo apt install -y ufw
+sudo apt install -y fail2ban
+sudo apt install -y git
+sudo apt install -y sysbench
 
 # Remove default PIP install and reinstall using easy_install
 sudo apt -y remove python-pip
@@ -57,7 +65,7 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	sudo apt update
 
 	# Install all optional apps
-	sudo apt --ignore-missing -y install $desktopApps
+	sudo apt install -y $desktopApps
 
 	# Install Chrome
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -65,18 +73,18 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	rm google-chrome-stable_current_amd64.deb
 
 	# Remove desktop apps that are not needed
-	sudo apt -y remove transmission-*
+	sudo apt remove -y transmission-*
 fi
 
 # Resolve dependencies
-sudo apt -y -f install
+sudo apt install -y -f
 
 # Force configure, just in case
 sudo dpkg --configure -a
 
 # Final cleanup after all apt-get commands
-sudo apt -y autoremove
-sudo apt -y autoclean
+sudo apt autoremove -y
+sudo apt autoclean -y
 
 
 # ------------Configuration---------------
