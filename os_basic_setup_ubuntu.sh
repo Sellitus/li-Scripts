@@ -44,6 +44,8 @@ sudo apt install -y htop
 sudo apt install -y build-essential
 sudo apt install -y python-setuptools
 sudo apt install -y python-all-dev
+sudo apt install -y software-properties-common
+sudo apt install -y python-software-properties
 sudo apt install -y ufw
 sudo apt install -y fail2ban
 sudo apt install -y git
