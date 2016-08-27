@@ -50,7 +50,7 @@ sudo apt install -y git
 sudo apt install -y sysbench
 
 # Remove default PIP install and reinstall using easy_install
-sudo apt -y remove python-pip
+sudo apt remove -y python-pip
 sudo easy_install pip
 
 # User option check
