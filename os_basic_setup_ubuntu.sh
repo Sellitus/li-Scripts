@@ -1,4 +1,6 @@
+#!/bin/bash
 # User editable options
+standardApps="nano openssh-server htop build-essential python-setuptools python-all-dev ufw fail2ban git sysbench"
 desktopApps="eclipse gedit virtualbox-5.0 steam qbittorrent pycharm-community"
 
 # Initialization
@@ -11,7 +13,7 @@ do
 	if [[ $arg == "-desktop" ]]; then
 		deskChoice="y"
 	fi
-	
+
 	if [[ $arg == "-server" ]]; then
 		serverChoice="y"
 	fi
@@ -20,71 +22,61 @@ done
 
 if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
 	echo "Would you like to set this machine up as a server? <Y/n>"
-	$serverChoice = "y"
+	serverChoice="y"
 	read serverChoice
 fi
 
 if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 	echo "Would you like to install optional desktop apps? <y/N>"
-	$deskChoice = "n"
+	deskChoice="n"
 	read deskChoice
 fi
 
 
 # Initial update
-apt-get update
-apt-get -y upgrade
-apt-get -y dist-upgrade
+apt update
+apt -y dist-upgrade
 
 # Base package install (including down to minimal 14.04)
-apt-get -y install sudo
-sudo apt-get -y install nano
-sudo apt-get -y install openssh-server
-sudo apt-get -y install htop
-sudo apt-get -y install build-essential
-sudo apt-get -y install python-setuptools
-sudo apt-get -y install python-all-dev
-sudo apt-get -y install ufw
-sudo apt-get -y install fail2ban
-sudo apt-get -y install git
-sudo apt-get -y install sysbench
+apt -y install sudo
+sudo apt --ignore-missing -y install $standardApps
 
 # Remove default PIP install and reinstall using easy_install
-sudo apt-get -y remove python-pip
+sudo apt -y remove python-pip
 sudo easy_install pip
 
 # User option check
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
-	
+
 	# Download the public keys then add the repos.
 	wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
 	sudo sh -c 'echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" >> /etc/apt/sources.list.d/virtualbox.list'
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
 	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
-	sudo apt-get update
-	
+
+	sudo apt update
+
 	# Install all optional apps
-	sudo apt-get -y install $desktopApps
-	
+	sudo apt --ignore-missing -y install $desktopApps
+
 	# Install Chrome
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 	sudo dpkg -i google-chrome-stable_current_amd64.deb
 	rm google-chrome-stable_current_amd64.deb
-	
+
 	# Remove desktop apps that are not needed
-	sudo apt-get -y remove transmission-*
+	sudo apt -y remove transmission-*
 fi
 
 # Resolve dependencies
-sudo apt-get -y -f install
+sudo apt -y -f install
 
 # Force configure, just in case
 sudo dpkg --configure -a
 
 # Final cleanup after all apt-get commands
-sudo apt-get -y autoremove
-sudo apt-get -y autoclean
-
+sudo apt -y autoremove
+sudo apt -y autoclean
 
 
 # ------------Configuration---------------
@@ -105,6 +97,7 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	# Add auto-update crontab job (6AM full update)
 	crontab -l | { cat; echo "0 6 * * * sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade && sudo apt-get -y autoremove >/dev/null 2>&1"; } | crontab -
 fi
-	
+
+
 # Final system restart
 sudo reboot
