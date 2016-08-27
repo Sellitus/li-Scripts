@@ -105,7 +105,7 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
-	crontab -l | { cat; echo "0 6 * * * sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade && sudo apt-get -y autoremove >/dev/null 2>&1"; } | crontab -
+	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
 
