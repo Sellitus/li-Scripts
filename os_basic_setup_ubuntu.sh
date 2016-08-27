@@ -21,13 +21,13 @@ done
 
 if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
 	echo "Would you like to set this machine up as a server? <Y/n>"
-	$serverChoice="y"
+	serverChoice="y"
 	read serverChoice
 fi
 
 if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 	echo "Would you like to install optional desktop apps? <y/N>"
-	$deskChoice="n"
+	deskChoice="n"
 	read deskChoice
 fi
 
