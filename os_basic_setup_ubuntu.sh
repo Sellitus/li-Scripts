@@ -108,6 +108,7 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
-
+# Message to notify user of restart
+echo "Setup: done  /  Restarting..."
 # Final system restart
 sudo reboot
