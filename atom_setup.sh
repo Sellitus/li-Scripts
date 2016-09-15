@@ -36,14 +36,12 @@ sudo apt update
 sudo apt install -y atom
 
 
-# Install Atom package prerequisites
-
-
 # Install Atom packages
 sudo apm install linter
 sudo apm install highlight-selected
 sudo apm install git-plus
 sudo apm install local-history
+sudo apm install remote-ftp
 
 sudo apm install minimap
 sudo apm install minimap-find-and-replace
