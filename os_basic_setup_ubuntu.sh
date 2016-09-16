@@ -1,6 +1,6 @@
 #!/bin/bash
 # User editable options
-desktopApps="eclipse gedit virtualbox-5.0 steam qbittorrent pycharm-community"
+desktopApps="eclipse gedit steam qbittorrent pycharm-community"
 
 # Initialization
 deskChoice=""
@@ -42,25 +42,34 @@ sudo apt install -y nano
 sudo apt install -y openssh-server
 sudo apt install -y htop
 sudo apt install -y build-essential
-sudo apt install -y python-setuptools
-sudo apt install -y python-all-dev
-sudo apt install -y software-properties-common
-sudo apt install -y python-software-properties
 sudo apt install -y ufw
 sudo apt install -y fail2ban
 sudo apt install -y git
 sudo apt install -y sysbench
 
+
+# Setup all the Python 2 and 3 Packages
+sudo apt install -y software-properties-common
+
+sudo apt install -y python-setuptools
+sudo apt install -y python-all-dev
+sudo apt install -y python-software-properties
+
+sudo apt install -y python3-setuptools
+sudo apt install -y python3-all-dev
+sudo apt install -y python3-software-properties
+
+
 # Remove default PIP install and reinstall using easy_install
-sudo apt remove -y python-pip
+sudo apt purge -y python-pip
+sudo apt purge -y python3-pip
 sudo easy_install pip
+sudo easy_install3 pip
 
 # User option check
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
 	# Download the public keys then add the repos.
-	wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
-	sudo sh -c 'echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib" >> /etc/apt/sources.list.d/virtualbox.list'
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
 	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
 
@@ -107,6 +116,12 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	# Add auto-update crontab job (6AM full update)
 	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
+
+
+# Config git while we're at it
+git config --global user.email "sellitus@gmail.com"
+git config --global user.name "Sellitus"
+
 
 # Message to notify user of restart
 echo "Setup: done  /  Restarting..."
