@@ -85,8 +85,8 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	
 	# Install Anadconda/Spyder
 	wget https://repo.continuum.io/archive/Anaconda3-4.1.1-Linux-x86_64.sh
-	sudo bash Anaconda3-4.1.1-Linux-x86_64.sh
-	rm -f Anaconda3-4.1.1-Linux-x86_64.sh
+	sudo bash Anaconda3-4.1.1-Linux-x86_64.sh -b
+	sudo rm -f Anaconda3-4.1.1-Linux-x86_64.sh
 
 	# Remove desktop apps that are not needed
 	sudo apt remove -y transmission-*
