@@ -1,6 +1,6 @@
 #!/bin/bash
 # User editable options
-desktopApps="eclipse gedit steam qbittorrent pycharm-community"
+desktopApps="eclipse gedit steam qbittorrent pycharm-community spyder3"
 
 # Initialization
 deskChoice=""
@@ -40,12 +40,13 @@ apt dist-upgrade -y
 apt install -y sudo
 sudo apt install -y nano
 sudo apt install -y openssh-server
-sudo apt install -y htop
 sudo apt install -y build-essential
+sudo apt install -y unzip
 sudo apt install -y ufw
 sudo apt install -y fail2ban
 sudo apt install -y git
 sudo apt install -y sysbench
+sudo apt install -y htop
 
 
 # Setup all the Python 2 and 3 Packages
@@ -82,11 +83,6 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 	sudo dpkg -i google-chrome-stable_current_amd64.deb
 	rm google-chrome-stable_current_amd64.deb
-	
-	# Install Anadconda/Spyder
-	wget https://repo.continuum.io/archive/Anaconda3-4.1.1-Linux-x86_64.sh
-	sudo bash Anaconda3-4.1.1-Linux-x86_64.sh -b
-	sudo rm -f Anaconda3-4.1.1-Linux-x86_64.sh
 
 	# Remove desktop apps that are not needed
 	sudo apt remove -y transmission-*
