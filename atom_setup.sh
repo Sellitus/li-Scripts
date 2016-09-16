@@ -37,27 +37,27 @@ sudo apt install -y atom
 
 
 # Install Atom packages
-sudo apm install linter
-sudo apm install highlight-selected
-sudo apm install git-plus
-sudo apm install local-history
-sudo apm install remote-ftp
+apm install linter
+apm install highlight-selected
+apm install git-plus
+apm install local-history
+apm install remote-ftp
 
-sudo apm install minimap
-sudo apm install minimap-find-and-replace
-sudo apm install minimap-pigments
-sudo apm install minimap-cursorline
-sudo apm install minimap-highlight-selected
+apm install minimap
+apm install minimap-find-and-replace
+apm install minimap-pigments
+apm install minimap-cursorline
+apm install minimap-highlight-selected
 
 
 # User option check
 if [[ $cppChoice == "y" || $cppChoice == "Y" || $cppChoice == "yes" || $cppChoice == "YES" || $cppChoice == "Yes" || $cppChoice == "" ]]; then
 	sudo apt install -y clang
 
-	sudo apm install autocomplete-clang
-	sudo apm install linter-clang
-	sudo apm install switch-header-source
-	sudo apm install clang-format
+	apm install autocomplete-clang
+	apm install linter-clang
+	apm install switch-header-source
+	apm install clang-format
 fi
 
 
@@ -68,11 +68,12 @@ if [[ $pythonChoice == "y" || $pythonChoice == "Y" || $pythonChoice == "yes" || 
 	sudo pip3 install pylama pylama-pylint
 	sudo pip3 install pep8
 
-	sudo apm install python-tools
-	sudo apm install python-indent
-	sudo apm install autocomplete-python
-	sudo apm install linter-python
-	sudo apm install linter-pep8
+	apm install python-tools
+	apm install python-indent
+	apm install autocomplete-python
+	apm install linter-python
+	apm install linter-pep8
 fi
+
 
 
