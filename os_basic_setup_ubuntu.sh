@@ -67,7 +67,7 @@ sudo apt purge -y python3-pip
 sudo easy_install pip
 sudo easy_install3 pip
 
-# User option check
+# Install desktop software
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
 	# Download the public keys then add the repos.
@@ -88,23 +88,11 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	sudo apt remove -y transmission-*
 fi
 
-# Resolve dependencies
-sudo apt install -y -f
 
-# Force configure, just in case
-sudo dpkg --configure -a
-
-# Final cleanup after all apt-get commands
-sudo apt autoremove -y
-sudo apt autoclean -y
-
-
-# ------------Configuration---------------
-
+# Install server options
 if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || $serverChoice == "YES" || $serverChoice == "Yes" || $serverChoice == "" ]]; then
 	# UFW
 	sudo ufw limit 22
-	sudo ufw --force enable
 
 	# Private Key
 	sudo mkdir /root/.ssh
@@ -118,10 +106,25 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
+# Enable UFW
+sudo ufw --force enable
 
 # Config git while we're at it
 git config --global user.email "sellitus@gmail.com"
 git config --global user.name "Sellitus"
+
+
+
+# Resolve dependencies
+sudo apt install -y -f
+
+# Force configure, just in case
+sudo dpkg --configure -a
+
+# Final cleanup after all apt-get commands
+sudo apt autoremove -y
+sudo apt autoclean -y
+
 
 
 # Message to notify user of restart
