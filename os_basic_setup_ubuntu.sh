@@ -70,15 +70,6 @@ sudo easy_install3 pip
 # Install desktop software
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
-	# Download the public keys then add the repos.
-	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
-	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
-
-	sudo apt update
-
-	# Install all optional apps
-	sudo apt install -y $desktopApps
-
 	# Install Chrome
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 	sudo dpkg -i google-chrome-stable_current_amd64.deb
@@ -86,6 +77,18 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 
 	# Remove desktop apps that are not needed
 	sudo apt remove -y transmission-*
+	
+
+	
+	# Download the public keys then add the repos.
+	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
+	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
+
+	sudo apt update
+
+	# Install all optional apps
+	# NOTE: Placed towards end since Steam must have a license agreement accepted
+	sudo apt install -y $desktopApps
 fi
 
 
