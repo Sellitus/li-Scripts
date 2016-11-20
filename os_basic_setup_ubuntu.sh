@@ -1,5 +1,6 @@
 #!/bin/bash
 # User editable options
+systemApps="nano openssh-server build-essential unzip ufw fail2ban git sysbench htop"
 desktopApps="eclipse gedit steam qbittorrent pycharm-community spyder3"
 
 # Initialization
@@ -38,15 +39,11 @@ apt dist-upgrade -y
 
 # Base package install (including down to minimal 14.04)
 apt install -y sudo
-sudo apt install -y nano
-sudo apt install -y openssh-server
-sudo apt install -y build-essential
-sudo apt install -y unzip
-sudo apt install -y ufw
-sudo apt install -y fail2ban
-sudo apt install -y git
-sudo apt install -y sysbench
-sudo apt install -y htop
+for currPackage in $systemApps
+do
+	sudo apt install -y $currPackage
+done
+
 
 
 # Setup all the Python 2 and 3 Packages
@@ -88,7 +85,10 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 
 	# Install all optional apps
 	# NOTE: Placed towards end since Steam must have a license agreement accepted
-	sudo apt install -y $desktopApps
+	for currPackage in $desktopApps
+	do
+		sudo apt install -y $currPackage
+	done
 fi
 
 
@@ -99,14 +99,14 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 
 	# Private Key
 	sudo mkdir /root/.ssh
-	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDcRoyVh2rT98Z/8pCx4FXlNPyFM8hQRF7xEq8g4ts9zutAnFbG/7xe7TOGl+3gaH7a9R6I+fw/jsnP62tA2rlVveKiPQi28L6/BEzvi673j6EkH7CREbO6SrOwLpKFu/MoU7chUdNM/7mGMEXfOv2Wvn1yUcldXtegm9RP/+yjhpYp4Fc073cPzzf/1hRAXKnzeSk4gUr2cpATUuVK4Yf0orW/Q2ZB+iQ3o3MHPQQh6of2EFhLf6e0AliKqO7jjgK6vXooPn+/zVTAazkQof92mIDb8QtUTuenb4b4SbHKj0VgIJvmT/K4VYua7AOk7dMPnqBvqiNF9ZlpxMRETgYzxip9XATX/NGqCvN45aaMt+r+ULOoe0jRNupMvy5++q9mHT6BileIsOgDjQC8kv5nL6/sC+0V/Wgn3237U6MwdLHVObnyga31VrT2iqCmOkr8qt8af6Dsu7/rbTGx/OXY0baCxIoOWWgiQwIDCEzAr+FY+MVY/ziYfRKIfBzyZs77/W3HsDeOHI1yxqA+WSCX11uOXxuVnMr20JBsDrK80vwHCgOfCP+P+ckRBY6DsSO0MHPhDdf9AXu+Cj9yVufj21Q+AQSmVG4J9LvgFmS6mpZI5+HAk/r0HPfQAIHE9zqtRbbY2AZpn2ldpXbyj6ClIZ1WT6Kth7XSJcoPd8UHSQ== root@sellitus" > /root/.ssh/authorized_keys
+	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCvp+nTivEWyDH/HZw/Hj4OciL20nITXVpvwDpmVgJgRV8sT9jhoigdKvMSLBcbfTmeQ2EBDzdz4BwgiAOdLn4woVZzvZOW9pqRtU3oiTudjRX02zL+j3r+Htq5OirJL/EvzYN2FtgGJslfDRrZAdOxJoV/A2YeXsCX0Nco0eTX2dcCmIhFkGKIXEqT4ic+y8NTtiPqYfuXj3dRWaNcD0s/XCc0ygKSZi99/uWcdTkkJidJhjFFzNbNUzExoRO+H7A9ec8c6LfpuFEJz4uXuuA+GKhVKQaXsQ3/se5k/uR+l1ghVdYg1fCtsbTHDoCcXG0WIl2bsehEifOFpQk7umsRd2C/DuWOhs+j2DLV7p7AnifyzRRVf9tXdf8gv2cnyYN7tRpysFLkPhGkUGyB1BoIAXLLj7zJo4zSamknwRuxswrGkDEkhy+MqRsOeYVw9+fgUB8+qaw4ponkCC+2Og0LfwfcCWZb3jeDJoJ4PqITpj6KTBYl7JftqNnANYE5S4tt8RhvHFdZ6O0rWQDG1/25zwfh3A7qXSx4+lJh8HUzHrC0jw+yv2YshyyiswPGyooUZcKS1/EpBm2rrC0xc8X6pa6qeGFGKsfHiMYmjqga4Q8ChFIb4tqPyJLcVT1PSWPVibRLLq2xXjLXAkTzeb4LH/IAKcJNxDSyhuvMk99M1Q== root@s" > /root/.ssh/authorized_keys
 	# Only allow root with a key to connect
 	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin without-password/g' /etc/ssh/sshd_config
 	sudo echo 'AllowUsers root' >> /etc/ssh/sshd_config
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
-	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y && sudo apt install -y -f >/dev/null 2>&1"; } | crontab -
+	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y &&  sudo apt install -y -f && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
 # Enable UFW
