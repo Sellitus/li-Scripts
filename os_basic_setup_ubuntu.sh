@@ -89,6 +89,12 @@ sudo easy_install3 pip
 
 
 
+# Remove apps that are not needed to lighten the load
+sudo apt purge -y transmission-*
+sudo apt purge -y apache2
+
+
+
 # Install desktop software first
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
@@ -96,9 +102,6 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 	sudo dpkg -i google-chrome-stable_current_amd64.deb
 	rm google-chrome-stable_current_amd64.deb
-
-	# Remove desktop apps that are not needed
-	sudo apt remove -y transmission-*
 
 	# Download the public keys then add the repos.
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
@@ -144,6 +147,8 @@ sudo ufw --force enable
 # Config git while we're at it
 git config --global user.email "sellitus@gmail.com"
 git config --global user.name "Sellitus"
+# User Git 2.0+'s method
+git config --global push.default simple
 
 
 
