@@ -1,7 +1,11 @@
 #!/bin/bash
 # User editable options
-systemApps="nano openssh-server build-essential unzip ufw fail2ban git sysbench htop"
+systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
+
+serverApps="openssh-server"
 desktopApps="eclipse gedit steam qbittorrent pycharm-community spyder3"
+
+
 
 # Initialization
 deskChoice=""
@@ -33,11 +37,31 @@ if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 fi
 
 
+
+# Change user's password along with root's if applicable
+echo "/-----\         USER          /-----\\"
+echo "\-----/    Password Change!   \-----/"
+passwd
+
+echo ""
+echo "/-----\         ROOT           /-----\\"
+echo "\-----/    Password Change!    \-----/"
+
+echo "Change ROOT password? <y/N>"
+rootPassChoice="n"
+read rootPassChoice
+
+if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
+	sudo passwd root
+fi
+
+
+
 # Initial update
 apt update
 apt dist-upgrade -y
 
-# Base package install (including down to minimal 14.04)
+# Base system package install (including down to minimal 16.04)
 apt install -y sudo
 for currPackage in $systemApps
 do
@@ -57,14 +81,15 @@ sudo apt install -y python3-setuptools
 sudo apt install -y python3-all-dev
 sudo apt install -y python3-software-properties
 
-
 # Remove default PIP install and reinstall using easy_install
 sudo apt purge -y python-pip
 sudo apt purge -y python3-pip
 sudo easy_install pip
 sudo easy_install3 pip
 
-# Install desktop software
+
+
+# Install desktop software first
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
 	# Install Chrome
@@ -74,9 +99,7 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 
 	# Remove desktop apps that are not needed
 	sudo apt remove -y transmission-*
-	
 
-	
 	# Download the public keys then add the repos.
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
 	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
@@ -94,6 +117,12 @@ fi
 
 # Install server options
 if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || $serverChoice == "YES" || $serverChoice == "Yes" || $serverChoice == "" ]]; then
+
+	for currPackage in $serverApps
+	do
+        	sudo apt install -y $currPackage
+	done
+
 	# UFW
 	sudo ufw limit 22
 
@@ -124,7 +153,7 @@ sudo apt install -y -f
 # Force configure, just in case
 sudo dpkg --configure -a
 
-# Final cleanup after all apt-get commands
+# Final cleanup after all apt commands
 sudo apt autoremove -y
 sudo apt autoclean -y
 
