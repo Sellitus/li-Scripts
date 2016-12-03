@@ -87,6 +87,10 @@ sudo apt purge -y python3-pip
 sudo easy_install pip
 sudo easy_install3 pip
 
+# Update PIP packages using the python update script
+sudo python py_pip_update_packages.py
+sudo python3 py_pip_update_packages.py
+
 
 
 # Remove apps that are not needed to lighten the load
