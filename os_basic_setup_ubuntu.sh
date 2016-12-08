@@ -3,7 +3,7 @@
 systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
-desktopApps="eclipse gedit steam qbittorrent pycharm-community spyder3"
+desktopApps="eclipse gedit steam qbittorrent spyder3"
 
 
 
@@ -109,7 +109,9 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 
 	# Download the public keys then add the repos.
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
-	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
+	
+	# BELOW requires pycharm-community package included in desktopApps array
+	#sudo add-apt-repository -y ppa:mystic-mirage/pycharm
 
 	sudo apt update
 
