@@ -3,7 +3,7 @@
 systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
-desktopApps="eclipse gedit steam qbittorrent spyder3"
+desktopApps="eclipse gedit steam qbittorrent spyder3 pycharm-community"
 
 
 
@@ -38,21 +38,26 @@ fi
 
 
 
-# Change user's password along with root's if applicable
-echo "/-----\         USER          /-----\\"
-echo "\-----/    Password Change!   \-----/"
-passwd
+echo "Change USER password? <y/N>"
+userPassChoice="n"
+read userPassChoice
 
-echo ""
-echo "/-----\         ROOT           /-----\\"
-echo "\-----/    Password Change!    \-----/"
+if [[ $userPassChoice == "y" || $userPassChoice == "Y" || $userPassChoice == "yes" || $userPassChoice == "YES" || $userPassChoice == "Yes" ]]; then
+        # Change user's password along with root's if applicable
+	echo "/-----\         USER          /-----\\"
+	echo "\-----/    Password Change!   \-----/"
+	passwd
 
-echo "Change ROOT password? <y/N>"
-rootPassChoice="n"
-read rootPassChoice
+	echo "Change ROOT password as well? <y/N>"
+	rootPassChoice="n"
+	read rootPassChoice
 
-if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
-	sudo passwd root
+	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
+		echo ""
+		echo "/-----\         ROOT           /-----\\"
+		echo "\-----/    Password Change!    \-----/"
+		sudo passwd root
+	fi
 fi
 
 
@@ -70,25 +75,18 @@ done
 
 
 
-# Setup all the Python 2 and 3 Packages
+# Setup all the Python 3 Packages
 sudo apt install -y software-properties-common
-
-sudo apt install -y python-setuptools
-sudo apt install -y python-all-dev
-sudo apt install -y python-software-properties
 
 sudo apt install -y python3-setuptools
 sudo apt install -y python3-all-dev
 sudo apt install -y python3-software-properties
 
 # Remove default PIP install and reinstall using easy_install
-sudo apt purge -y python-pip
 sudo apt purge -y python3-pip
-sudo easy_install pip
 sudo easy_install3 pip
 
 # Update PIP packages using the python update script
-sudo python py_pip_update_packages.py
 sudo python3 py_pip_update_packages.py
 
 
@@ -111,16 +109,19 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
 	
 	# BELOW requires pycharm-community package included in desktopApps array
-	#sudo add-apt-repository -y ppa:mystic-mirage/pycharm
+	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
 
 	sudo apt update
 
 	# Install all optional apps
 	# NOTE: Placed towards end since Steam must have a license agreement accepted
-	for currPackage in $desktopApps
-	do
-		sudo apt install -y $currPackage
-	done
+
+	#for currPackage in $desktopApps
+	#do
+	#	sudo apt install -y $currPackage
+	#done
+	
+	sudo apt install -y $desktopApps
 fi
 
 
