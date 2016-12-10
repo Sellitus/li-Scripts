@@ -49,6 +49,8 @@ apm install minimap-pigments
 apm install minimap-cursorline
 apm install minimap-highlight-selected
 
+apm install atom-beautify
+
 
 # User option check
 if [[ $cppChoice == "y" || $cppChoice == "Y" || $cppChoice == "yes" || $cppChoice == "YES" || $cppChoice == "Yes" || $cppChoice == "" ]]; then
@@ -65,14 +67,13 @@ if [[ $pythonChoice == "y" || $pythonChoice == "Y" || $pythonChoice == "yes" || 
 	sudo apt install -y python3-pip
 	sudo pip3 install --upgrade pip
 
-	sudo pip3 install pylama pylama-pylint
-	sudo pip3 install pep8
+	sudo pip3 install pylama pylama-pylint autopep8
 
 	apm install python-tools
 	apm install python-indent
 	apm install autocomplete-python
-	apm install linter-python
-	apm install linter-pep8
+	apm install linter-pylama
+
 fi
 
 

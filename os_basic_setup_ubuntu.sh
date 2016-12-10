@@ -3,7 +3,7 @@
 systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
-desktopApps="eclipse gedit steam qbittorrent spyder3 pycharm-community"
+desktopApps="eclipse gedit steam qbittorrent spyder3 pycharm-community guake"
 
 
 
