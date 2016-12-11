@@ -122,9 +122,6 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	#done
 	
 	sudo apt install -y $desktopApps
-	
-	# Add auto-update crontab job (Check every hour)
-	crontab -l | { cat; echo "0 * * * * sudo apt update && sudo apt dist-upgrade -y &&  sudo apt install -y -f && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
 
