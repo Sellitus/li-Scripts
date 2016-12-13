@@ -14,6 +14,11 @@ echo "Total amount of ram : $tram MB"
 echo "Total amount of swap : $swap MB"
 echo "System uptime : $up"
 
+
+io=$( ( dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync && rm -f test_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' )
+echo "I/O speed : $io"
+
+
 cachefly=$( wget -O /dev/null http://cachefly.cachefly.net/100mb.test 2>&1 | awk '/\/dev\/null/ {speed=$3 $4} END {gsub(/\(|\)/,"",speed); print speed}' )
 echo "Download speed from CacheFly: $cachefly "
 coloatatl=$( wget -O /dev/null http://speed.atl.coloat.com/100mb.test 2>&1 | awk '/\/dev\/null/ {speed=$3 $4} END {gsub(/\(|\)/,"",speed); print speed}' )
@@ -37,5 +42,3 @@ slsjc=$( wget -O /dev/null http://speedtest.sjc01.softlayer.com/downloads/test10
 echo "Download speed from Softlayer, San Jose, CA: $slsjc "
 slwdc=$( wget -O /dev/null http://speedtest.wdc01.softlayer.com/downloads/test100.zip 2>&1 | awk '/\/dev\/null/ {speed=$3 $4} END {gsub(/\(|\)/,"",speed); print speed}' )
 echo "Download speed from Softlayer, Washington, DC: $slwdc "
-io=$( ( dd if=/dev/zero of=test_$$ bs=64k count=16k conv=fdatasync && rm -f test_$$ ) 2>&1 | awk -F, '{io=$NF} END { print io}' )
-echo "I/O speed : $io"
