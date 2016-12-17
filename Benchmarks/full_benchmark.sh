@@ -1,11 +1,16 @@
 #!/bin/bash
 
 echo ""
-echo "---Core---"
+echo "---Install Sysbench---"
 echo ""
 
 sudo apt install -y sysbench
 
+
+
+echo ""
+echo "---Core Tests---"
+echo ""
 
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo )
 cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
@@ -37,18 +42,10 @@ echo "I/O speed : $io"
 echo ""
 
 
-echo ""
-echo "---Speedtest---"
-echo ""
-
-
-python3 speedtest-cli-master/speedtest.py
-
 
 echo ""
 echo "---Sysbench---"
 echo ""
-
 
 echo "# Threads: 1"
 echo ""
@@ -60,4 +57,11 @@ echo ""
 sysbench --test=cpu --cpu-max-prime=20000 --num-threads=32 run
 echo ""
 
+
+
+echo ""
+echo "---Speedtest---"
+echo ""
+
+python3 speedtest-cli/speedtest.py --server 3501
 
