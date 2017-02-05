@@ -172,6 +172,7 @@ sudo apt autoclean -y
 
 
 # Message to notify user of restart
-echo "Setup: done  /  Restarting..."
+echo "Setup: Done  /  Restarting..."
+sleep 5
 # Final system restart
 sudo reboot
