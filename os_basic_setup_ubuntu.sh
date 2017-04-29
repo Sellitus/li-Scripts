@@ -3,7 +3,7 @@
 systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
-desktopApps="eclipse gedit steam qbittorrent spyder3 pycharm-community guake"
+desktopApps="eclipse gedit steam qbittorrent sublime-text-installer guake terminator"
 
 
 
@@ -87,7 +87,7 @@ sudo apt purge -y python3-pip
 sudo easy_install3 pip
 
 # Update PIP packages using the python update script
-sudo python3 py_pip_update_packages.py
+sudo python3 pip_update.py
 
 
 
@@ -107,9 +107,9 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 
 	# Download the public keys then add the repos.
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
-	
-	# BELOW requires pycharm-community package included in desktopApps array
-	sudo add-apt-repository -y ppa:mystic-mirage/pycharm
+
+	# Sublime 3 PPA
+	sudo add-apt-repository ppa:webupd8team/sublime-text-3
 
 	sudo apt update
 
