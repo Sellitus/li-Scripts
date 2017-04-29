@@ -109,7 +109,7 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
 
 	# Sublime 3 PPA
-	sudo add-apt-repository ppa:webupd8team/sublime-text-3
+	sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
 
 	sudo apt update
 
