@@ -3,7 +3,7 @@
 systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
-desktopApps="eclipse gedit steam qbittorrent sublime-text-installer guake terminator"
+desktopApps="eclipse gedit qbittorrent sublime-text tilix"
 
 
 
@@ -66,7 +66,7 @@ fi
 apt update
 apt dist-upgrade -y
 
-# Base system package install (including down to minimal 16.04)
+# Base system package install (including down to Ubuntu Minimal)
 apt install -y sudo
 for currPackage in $systemApps
 do
@@ -89,8 +89,6 @@ sudo easy_install3 pip
 # Update PIP packages using the python update script
 sudo python3 pip_update.py
 
-
-
 # Remove apps that are not needed to lighten the load
 sudo apt purge -y transmission-*
 sudo apt purge -y apache2
@@ -101,27 +99,24 @@ sudo apt purge -y apache2
 if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
 
 	# Install Chrome
-	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-	sudo dpkg -i google-chrome-stable_current_amd64.deb
-	rm google-chrome-stable_current_amd64.deb
+	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -P /tmp/
+	sudo dpkg -i /tmp/google-chrome-stable_current_amd64.deb
+	rm /tmp/google-chrome-stable_current_amd64.deb
 
-	# Download the public keys then add the repos.
-	sudo add-apt-repository -y ppa:hydr0g3n/qbittorrent-stable
+	# Sublime 3
+	wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+	sudo apt-add-repository "deb https://download.sublimetext.com/ apt/stable/"
 
-	# Sublime 3 PPA
-	sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
-
+	# Update apt cache
 	sudo apt update
 
-	# Install all optional apps
-	# NOTE: Placed towards end since Steam must have a license agreement accepted
-
-	#for currPackage in $desktopApps
-	#do
-	#	sudo apt install -y $currPackage
-	#done
+	# Install all desktop apps individually in case one fails
+	for currPackage in $desktopApps
+	do
+		sudo apt install -y $currPackage
+	done
 	
-	sudo apt install -y $desktopApps
+	#sudo apt install -y $desktopApps
 fi
 
 
