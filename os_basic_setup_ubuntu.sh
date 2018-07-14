@@ -1,6 +1,6 @@
 #!/bin/bash
 # User editable options
-systemApps="curl nano build-essential unzip ufw fail2ban git sysbench htop"
+systemApps="tmux curl nano build-essential unzip ufw fail2ban git sysbench htop"
 
 serverApps="openssh-server"
 desktopApps="eclipse gedit qbittorrent sublime-text tilix"
@@ -73,6 +73,10 @@ do
 	sudo apt install -y $currPackage
 done
 
+
+
+# Set tmux to run upon starting shell
+sed -i '1s/^/[[ $TERM != "screen" ]] && exec tmux\n/' ~/.bashrc
 
 
 # Setup all the Python 3 Packages
