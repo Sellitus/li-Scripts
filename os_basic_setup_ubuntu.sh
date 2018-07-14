@@ -75,15 +75,21 @@ done
 
 
 
-# Set tmux to run upon starting shell
-echo 'keyPress=""
-read -t 1 -n 1 -s -r -p "Press any key to enter normal bash..." keyPress
-if [ $keyPress="" ]; then
+# Set tmux to run upon starting shell (along with recovery)
+echo 'echo ""
+IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
+
+if [ -z "$keyPress" ]; then
   if command -v tmux>/dev/null; then
-    [[ ! $TERM =~ screen ]] && [ -z $TMUX ] && exec tmux new -A -s main
+    if [[ -z "$TMUX" ]] && [ "$SSH_CONNECTION" != "" ]; then
+      tmux attach-session -t main || tmux new-session -s main
+    fi
   fi
+else
+  echo ""
+  echo ""
 fi
-\' | cat - ~/.bashrc > temp && mv temp ~/.bashrc
+\' >> ~/.bashrc
 
 
 # Setup all the Python 3 Packages
