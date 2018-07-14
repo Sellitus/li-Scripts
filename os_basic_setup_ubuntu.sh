@@ -76,7 +76,7 @@ done
 
 
 # Set tmux to run upon starting shell
-sed -i '1s/^/if command -v tmux>\/dev\/null; then\n  [[ ! $TERM =~ screen ]] \&\& [ -z $TMUX ] \&\& exec tmux\nfi\n/' ~/.bashrc
+sed -i '1s/^/if command -v tmux>\/dev\/null; then\n  [[ ! $TERM =~ screen ]] \&\& [ -z $TMUX ] \&\& exec tmux attach -t 0\nfi\n/' ~/.bashrc
 
 
 # Setup all the Python 3 Packages
