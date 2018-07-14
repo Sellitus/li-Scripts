@@ -76,7 +76,14 @@ done
 
 
 # Set tmux to run upon starting shell
-sed -i '1s/^/if command -v tmux>\/dev\/null; then\n  [[ ! $TERM =~ screen ]] \&\& [ -z $TMUX ] \&\& exec tmux attach -t 0\nfi\n/' ~/.bashrc
+echo 'keyPress=""
+read -t 1 -n 1 -s -r -p "Press any key to enter normal bash..." keyPress
+if [ $keyPress="" ]; then
+  if command -v tmux>/dev/null; then
+    [[ ! $TERM =~ screen ]] && [ -z $TMUX ] && exec tmux new -A -s main
+  fi
+fi
+\' | cat - ~/.bashrc > temp && mv temp ~/.bashrc
 
 
 # Setup all the Python 3 Packages
