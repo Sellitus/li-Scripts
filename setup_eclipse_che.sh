@@ -3,6 +3,7 @@
 sudo apt install -y docker.io
 
 sudo ufw allow 8080
+sudo ufw allow 5050
 sudo ufw allow 32768:65535/tcp
 sudo ufw allow 32768:65535/udp
 sudo ufw --force enable
