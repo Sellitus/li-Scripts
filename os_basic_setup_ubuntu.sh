@@ -48,7 +48,7 @@ if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 fi
 
 
-adduser --home /home/objured/ --disabled-password --gecos "" objured
+adduser --home /home/objured/ --gecos "" objured
 usermod -aG sudo objured 
 
 echo "Change USER password? <y/N>"
