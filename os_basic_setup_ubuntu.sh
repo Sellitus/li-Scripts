@@ -1,15 +1,26 @@
 #!/bin/bash
+
+
+
+#if [[ $UID != 0 ]]; then
+#    echo "Please run this script with sudo:"
+#    echo "sudo $0 $*"
+#    exit 1
+#fi
+
+
+
 # User editable options
-systemApps="tmux curl nano build-essential unzip ufw fail2ban git sysbench htop"
+systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential"
 
 serverApps="openssh-server"
 desktopApps="eclipse gedit qbittorrent sublime-text tilix"
 
-
-
 # Initialization
 deskChoice=""
 serverChoice=""
+
+
 
 # Iterate through every argument passed by user
 for arg in "$@"
@@ -37,16 +48,19 @@ if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
 fi
 
 
+adduser --home /home/objured/ --disabled-password --gecos "" objured
+usermod -aG sudo objured 
 
 echo "Change USER password? <y/N>"
 userPassChoice="n"
 read userPassChoice
 
+
 if [[ $userPassChoice == "y" || $userPassChoice == "Y" || $userPassChoice == "yes" || $userPassChoice == "YES" || $userPassChoice == "Yes" ]]; then
         # Change user's password along with root's if applicable
 	echo "/-----\         USER          /-----\\"
 	echo "\-----/    Password Change!   \-----/"
-	passwd
+	passwd objured
 
 	echo "Change ROOT password as well? <y/N>"
 	rootPassChoice="n"
@@ -56,7 +70,7 @@ if [[ $userPassChoice == "y" || $userPassChoice == "Y" || $userPassChoice == "ye
 		echo ""
 		echo "/-----\         ROOT           /-----\\"
 		echo "\-----/    Password Change!    \-----/"
-		sudo passwd root
+		passwd root
 	fi
 fi
 
@@ -64,10 +78,10 @@ fi
 
 # Initial update
 apt update
-apt dist-upgrade -y
-
-# Base system package install (including down to Ubuntu Minimal)
 apt install -y sudo
+
+# Full upgrade and base system package install (including down to Ubuntu Minimal)
+apt full-upgrade -y
 for currPackage in $systemApps
 do
 	sudo apt install -y $currPackage
@@ -143,11 +157,15 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	sudo ufw limit 22
 
 	# Private Key
-	sudo mkdir /root/.ssh
-	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCw+VydauD2UqTurhqPiIAZupauFLiKQqjxH9xk7bSfl4eA+fxc6d8BjAYNr4PMTo94rPt5wRxYaxH29lBz7uWJlQqev3ZvWljT0MHxJSvCCND5U+K+e9aEzayBBXq2Gue0EUv15Eap17CSLqKg0YT5JNKHLAV4ZfV2yXCDSt+zVBpfvzQjkdNDb6fnvYqfYmdta0fBXwY3JHNlGthGmZ30xIaO7Atm/G0hjvP6Sdv6RjoGWUh62XhpepTqQMY2wK4s+J8Mm/idNyLpEzE0ohpfILl4lUnpMDSTm0nOOifzJHk6RLWvSqmPx75GHjrkgjsuktT9iMzjpMjC3cZECrR7hF2pT7vHuaAreU7epup5BeupYbs2KCV1Nqx81tPo624z4vNosNjLG+FmMRViQfj/JwDVmDc/29dLOWFOecGV22KQ8UvspjuQlRw0gQ46XSL+VYhTzmajrrw5QMmT1ifAzepAUg/yTmkqUZsepKTZ/gt1jMzuCKpwsDUBPJnRnJi5D2v0Za5ijsbXizc0LFQ7OIejzgJXBebfC2hKEnEqYCZfuLn6T04BxP3SMQqk85dBFe7ydRpCqyIqlUu19RYrWPs59mE4DQza4nDWyhQjasbQP+FqOERIt1s+LW0TzvLOPcSoIyYX5h31v10DEJ5CqomrDFQYNNY4ZKZOaKrs3w== default@ubuntu" > /root/.ssh/authorized_keys
-	# Only allow root with a key to connect
-	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin without-password/g' /etc/ssh/sshd_config
-	sudo echo 'AllowUsers root' >> /etc/ssh/sshd_config
+	sudo mkdir /home/objured/.ssh
+	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCw+VydauD2UqTurhqPiIAZupauFLiKQqjxH9xk7bSfl4eA+fxc6d8BjAYNr4PMTo94rPt5wRxYaxH29lBz7uWJlQqev3ZvWljT0MHxJSvCCND5U+K+e9aEzayBBXq2Gue0EUv15Eap17CSLqKg0YT5JNKHLAV4ZfV2yXCDSt+zVBpfvzQjkdNDb6fnvYqfYmdta0fBXwY3JHNlGthGmZ30xIaO7Atm/G0hjvP6Sdv6RjoGWUh62XhpepTqQMY2wK4s+J8Mm/idNyLpEzE0ohpfILl4lUnpMDSTm0nOOifzJHk6RLWvSqmPx75GHjrkgjsuktT9iMzjpMjC3cZECrR7hF2pT7vHuaAreU7epup5BeupYbs2KCV1Nqx81tPo624z4vNosNjLG+FmMRViQfj/JwDVmDc/29dLOWFOecGV22KQ8UvspjuQlRw0gQ46XSL+VYhTzmajrrw5QMmT1ifAzepAUg/yTmkqUZsepKTZ/gt1jMzuCKpwsDUBPJnRnJi5D2v0Za5ijsbXizc0LFQ7OIejzgJXBebfC2hKEnEqYCZfuLn6T04BxP3SMQqk85dBFe7ydRpCqyIqlUu19RYrWPs59mE4DQza4nDWyhQjasbQP+FqOERIt1s+LW0TzvLOPcSoIyYX5h31v10DEJ5CqomrDFQYNNY4ZKZOaKrs3w== default@ubuntu" > /home/objured/.ssh/authorized_keys
+	sudo chmod 700 /home/objured/.ssh/
+	sudo chmod 600 /home/objured/.ssh/authorized_keys
+	sudo chown objured /home/objured/.ssh/authorized_keys 
+	# Only allow objured with a key to connect
+	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+	sudo echo 'AllowUsers objured' >> /etc/ssh/sshd_config
+	sudo echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
