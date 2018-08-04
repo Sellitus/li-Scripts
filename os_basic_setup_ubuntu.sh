@@ -1,13 +1,10 @@
 #!/bin/bash
 
 
-
-#if [[ $UID != 0 ]]; then
-#    echo "Please run this script with sudo:"
-#    echo "sudo $0 $*"
-#    exit 1
-#fi
-
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root." 
+   exit 1
+fi
 
 
 # User editable options
@@ -19,7 +16,6 @@ desktopApps="eclipse gedit qbittorrent sublime-text tilix"
 # Initialization
 deskChoice=""
 serverChoice=""
-
 
 
 # Iterate through every argument passed by user
@@ -49,31 +45,19 @@ fi
 
 
 adduser --home /home/objured/ --gecos "" objured
-usermod -aG sudo objured 
-
-echo "Change USER password? <y/N>"
-userPassChoice="n"
-read userPassChoice
+usermod -aG sudo objured
 
 
-if [[ $userPassChoice == "y" || $userPassChoice == "Y" || $userPassChoice == "yes" || $userPassChoice == "YES" || $userPassChoice == "Yes" ]]; then
-        # Change user's password along with root's if applicable
-	echo "/-----\         USER          /-----\\"
-	echo "\-----/    Password Change!   \-----/"
-	passwd objured
+echo "Change ROOT password as well? <y/N>"
+rootPassChoice="n"
+read rootPassChoice
 
-	echo "Change ROOT password as well? <y/N>"
-	rootPassChoice="n"
-	read rootPassChoice
-
-	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
-		echo ""
-		echo "/-----\         ROOT           /-----\\"
-		echo "\-----/    Password Change!    \-----/"
-		passwd root
-	fi
+if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
+	echo ""
+	echo "/-----\         ROOT           /-----\\"
+	echo "\-----/    Password Change!    \-----/"
+	passwd root
 fi
-
 
 
 # Initial update
@@ -86,7 +70,6 @@ for currPackage in $systemApps
 do
 	sudo apt install -y $currPackage
 done
-
 
 
 # Set tmux to run upon starting shell (along with recovery)
@@ -126,7 +109,6 @@ sudo python3 pip_update.py
 # Remove apps that are not needed to lighten the load
 sudo apt purge -y transmission-*
 sudo apt purge -y apache2
-
 
 
 # Install desktop software first
@@ -170,7 +152,7 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCw+VydauD2UqTurhqPiIAZupauFLiKQqjxH9xk7bSfl4eA+fxc6d8BjAYNr4PMTo94rPt5wRxYaxH29lBz7uWJlQqev3ZvWljT0MHxJSvCCND5U+K+e9aEzayBBXq2Gue0EUv15Eap17CSLqKg0YT5JNKHLAV4ZfV2yXCDSt+zVBpfvzQjkdNDb6fnvYqfYmdta0fBXwY3JHNlGthGmZ30xIaO7Atm/G0hjvP6Sdv6RjoGWUh62XhpepTqQMY2wK4s+J8Mm/idNyLpEzE0ohpfILl4lUnpMDSTm0nOOifzJHk6RLWvSqmPx75GHjrkgjsuktT9iMzjpMjC3cZECrR7hF2pT7vHuaAreU7epup5BeupYbs2KCV1Nqx81tPo624z4vNosNjLG+FmMRViQfj/JwDVmDc/29dLOWFOecGV22KQ8UvspjuQlRw0gQ46XSL+VYhTzmajrrw5QMmT1ifAzepAUg/yTmkqUZsepKTZ/gt1jMzuCKpwsDUBPJnRnJi5D2v0Za5ijsbXizc0LFQ7OIejzgJXBebfC2hKEnEqYCZfuLn6T04BxP3SMQqk85dBFe7ydRpCqyIqlUu19RYrWPs59mE4DQza4nDWyhQjasbQP+FqOERIt1s+LW0TzvLOPcSoIyYX5h31v10DEJ5CqomrDFQYNNY4ZKZOaKrs3w== default@ubuntu" > /home/objured/.ssh/authorized_keys
 	sudo chmod 700 /home/objured/.ssh/
 	sudo chmod 600 /home/objured/.ssh/authorized_keys
-	sudo chown objured /home/objured/.ssh/authorized_keys 
+	sudo chown -R objured:objured /home/objured/.ssh/
 	# Only allow objured with a key to connect
 	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
 	sudo echo 'AllowUsers objured' >> /etc/ssh/sshd_config
@@ -191,7 +173,6 @@ git config --global user.name "Sellitus"
 git config --global push.default simple
 
 
-
 # Resolve dependencies
 sudo apt install -y -f
 
@@ -201,7 +182,6 @@ sudo dpkg --configure -a
 # Final cleanup after all apt commands
 sudo apt autoremove -y
 sudo apt autoclean -y
-
 
 
 # Message to notify user of restart
