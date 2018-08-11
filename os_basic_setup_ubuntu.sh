@@ -21,35 +21,8 @@ x11Choice=""
 guiChoice=""
 username=""
 
-#
-# Iterate through every argument passed by user
-# for arg in "$@"
-# do
-# 	if [[ $arg == "" ]]; then
-# 		guiChoice="y"
-# 	fi
-#
-# 	if [[ $arg == "-server" ]]; then
-# 		serverChoice="y"
-# 	fi
-# done
-#
-#if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
-# 	echo "Would you like to set this machine up as a server? <Y/n>"
-# 	serverChoice="y"
-# 	read serverChoice
-# fi
-#
-# if [[ $guiChoice != "y" && $guiChoice != "n" ]]; then
-# 	echo "Would you like to install optional desktop apps? <y/N>"
-# 	guiChoice="n"
-# 	read guiChoice
-# fi
-#
-
 
 userInput=$1
-
 if [[ $userInput == "" ]]; then
 	echo ""
 	echo "Choose some or all of the options below. Separate your choices by comma with no spaces."
@@ -119,8 +92,9 @@ if [[ $basicChoice == "y" ]]; then
 	echo "Change ROOT password as well? <Y/n>"
 	rootPassChoice="y"
 	read rootPassChoice
+	rootPassChoice="$(echo -e "${rootPassChoice}" | tr -d '[:space:]')"
 
-	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" ]]; then
+	if [[ $rootPassChoice == "" || [[ $rootPassChoice == "y" || $rootPassChoice == "Y" ]]; then
 		echo ""
 		echo "/-----\         ROOT           /-----\\"
 		echo "\-----/    Password Change!    \-----/"
