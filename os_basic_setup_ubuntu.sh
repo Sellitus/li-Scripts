@@ -75,8 +75,7 @@ while [[ $sure -eq 0 ]]; do
 	
 	sureInput=""
 	echo ""
-	echo "Do you want to create the user: $username ?"
-	echo "(Y/n)"
+	echo "Do you want to create the user: $username ? <Y/n>"
 	read -p ":: " sureInput
 	sureInput="$(echo -e "${sureInput}" | tr -d '[:space:]')"
 	
@@ -113,15 +112,15 @@ if [[ $basicChoice == "y" ]]; then
 	echo ""
 	echo ""
 
-	adduser --home /home/objured/ --gecos "" objured
-	usermod -aG sudo objured
+	adduser --home /home/$username/ --gecos "" $username
+	usermod -aG sudo $username
 
 
-	echo "Change ROOT password as well? <y/N>"
-	rootPassChoice="n"
+	echo "Change ROOT password as well? <Y/n>"
+	rootPassChoice="y"
 	read rootPassChoice
 
-	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
+	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" ]]; then
 		echo ""
 		echo "/-----\         ROOT           /-----\\"
 		echo "\-----/    Password Change!    \-----/"
@@ -247,14 +246,14 @@ if [[ $serverChoice == "y" ]]; then
 	sudo ufw limit 22
 
 	# Private Key
-	sudo mkdir /home/objured/.ssh
-	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCw+VydauD2UqTurhqPiIAZupauFLiKQqjxH9xk7bSfl4eA+fxc6d8BjAYNr4PMTo94rPt5wRxYaxH29lBz7uWJlQqev3ZvWljT0MHxJSvCCND5U+K+e9aEzayBBXq2Gue0EUv15Eap17CSLqKg0YT5JNKHLAV4ZfV2yXCDSt+zVBpfvzQjkdNDb6fnvYqfYmdta0fBXwY3JHNlGthGmZ30xIaO7Atm/G0hjvP6Sdv6RjoGWUh62XhpepTqQMY2wK4s+J8Mm/idNyLpEzE0ohpfILl4lUnpMDSTm0nOOifzJHk6RLWvSqmPx75GHjrkgjsuktT9iMzjpMjC3cZECrR7hF2pT7vHuaAreU7epup5BeupYbs2KCV1Nqx81tPo624z4vNosNjLG+FmMRViQfj/JwDVmDc/29dLOWFOecGV22KQ8UvspjuQlRw0gQ46XSL+VYhTzmajrrw5QMmT1ifAzepAUg/yTmkqUZsepKTZ/gt1jMzuCKpwsDUBPJnRnJi5D2v0Za5ijsbXizc0LFQ7OIejzgJXBebfC2hKEnEqYCZfuLn6T04BxP3SMQqk85dBFe7ydRpCqyIqlUu19RYrWPs59mE4DQza4nDWyhQjasbQP+FqOERIt1s+LW0TzvLOPcSoIyYX5h31v10DEJ5CqomrDFQYNNY4ZKZOaKrs3w== default@ubuntu" > /home/objured/.ssh/authorized_keys
-	sudo chmod 700 /home/objured/.ssh/
-	sudo chmod 600 /home/objured/.ssh/authorized_keys
-	sudo chown -R objured:objured /home/objured/.ssh/
-	# Only allow objured with a key to connect
+	sudo mkdir /home/$username/.ssh
+	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCw+VydauD2UqTurhqPiIAZupauFLiKQqjxH9xk7bSfl4eA+fxc6d8BjAYNr4PMTo94rPt5wRxYaxH29lBz7uWJlQqev3ZvWljT0MHxJSvCCND5U+K+e9aEzayBBXq2Gue0EUv15Eap17CSLqKg0YT5JNKHLAV4ZfV2yXCDSt+zVBpfvzQjkdNDb6fnvYqfYmdta0fBXwY3JHNlGthGmZ30xIaO7Atm/G0hjvP6Sdv6RjoGWUh62XhpepTqQMY2wK4s+J8Mm/idNyLpEzE0ohpfILl4lUnpMDSTm0nOOifzJHk6RLWvSqmPx75GHjrkgjsuktT9iMzjpMjC3cZECrR7hF2pT7vHuaAreU7epup5BeupYbs2KCV1Nqx81tPo624z4vNosNjLG+FmMRViQfj/JwDVmDc/29dLOWFOecGV22KQ8UvspjuQlRw0gQ46XSL+VYhTzmajrrw5QMmT1ifAzepAUg/yTmkqUZsepKTZ/gt1jMzuCKpwsDUBPJnRnJi5D2v0Za5ijsbXizc0LFQ7OIejzgJXBebfC2hKEnEqYCZfuLn6T04BxP3SMQqk85dBFe7ydRpCqyIqlUu19RYrWPs59mE4DQza4nDWyhQjasbQP+FqOERIt1s+LW0TzvLOPcSoIyYX5h31v10DEJ5CqomrDFQYNNY4ZKZOaKrs3w== default@ubuntu" > /home/$username/.ssh/authorized_keys
+	sudo chmod 700 /home/$username/.ssh/
+	sudo chmod 600 /home/$username/.ssh/authorized_keys
+	sudo chown -R $username:$username /home/$username/.ssh/
+	# Only allow $username with a key to connect
 	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
-	sudo echo 'AllowUsers objured' >> /etc/ssh/sshd_config
+	sudo echo "AllowUsers $username/" >> /etc/ssh/sshd_config
 	sudo echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
 	sudo echo 'Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc' >> /etc/ssh/sshd_config
 	sudo echo 'Compression yes' >> /etc/ssh/sshd_config
