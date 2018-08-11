@@ -2,117 +2,188 @@
 
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root." 
-   exit 1
+	echo "This script must be run as root." 
+	exit 1
 fi
 
 
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential"
-
 serverApps="openssh-server"
-desktopApps="eclipse gedit qbittorrent sublime-text tilix"
+guiApps="eclipse gedit qbittorrent sublime-text tilix"
+x11Apps="xubuntu-desktop"
+
 
 # Initialization
-deskChoice=""
+basicChoice=""
 serverChoice=""
+x11Choice=""
+guiChoice=""
 
 
+#
 # Iterate through every argument passed by user
-for arg in "$@"
-do
-	if [[ $arg == "-desktop" ]]; then
-		deskChoice="y"
-	fi
+# for arg in "$@"
+# do
+# 	if [[ $arg == "" ]]; then
+# 		guiChoice="y"
+# 	fi
+#
+# 	if [[ $arg == "-server" ]]; then
+# 		serverChoice="y"
+# 	fi
+# done
+#
+#if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
+# 	echo "Would you like to set this machine up as a server? <Y/n>"
+# 	serverChoice="y"
+# 	read serverChoice
+# fi
+#
+# if [[ $guiChoice != "y" && $guiChoice != "n" ]]; then
+# 	echo "Would you like to install optional desktop apps? <y/N>"
+# 	guiChoice="n"
+# 	read guiChoice
+# fi
+#
 
-	if [[ $arg == "-server" ]]; then
+
+userInput=$1
+
+if [[ $userInput == "" ]]; then
+	echo ""
+	echo "Choose some or all of the options below. Separate your choices by comma with no spaces."
+	echo "EXAMPLE: 1,2,3"
+	echo "1 - Basic Updates and Config"
+	echo "    ($systemApps)"
+	echo "2 - Server Setup"
+	echo "    ($serverApps)"
+	echo "3 - X11 Apps"
+	echo "    ($x11Apps)"
+	echo "4 - GUI Apps"
+	echo "    ($guiApps)"
+	echo ""
+	read userInput
+fi
+
+IFS=',' read -ra ADDR <<< "$userInput"
+for i in "${ADDR[@]}"; do
+	if [[ $i == "1" ]]; then
+		basicChoice="y"
+	fi
+	if [[ $i == "2" ]]; then
 		serverChoice="y"
 	fi
+	if [[ $i == "3" ]]; then
+		x11Choice="y"
+	fi
+	if [[ $i == "4" ]]; then
+		guiChoice="y"
+	fi
 done
 
 
-if [[ $serverChoice != "y" && $serverChoice != "n" ]]; then
-	echo "Would you like to set this machine up as a server? <Y/n>"
-	serverChoice="y"
-	read serverChoice
-fi
 
-if [[ $deskChoice != "y" && $deskChoice != "n" ]]; then
-	echo "Would you like to install optional desktop apps? <y/N>"
-	deskChoice="n"
-	read deskChoice
-fi
+if [[ $basicChoice == "y" ]]; then
 
-
-adduser --home /home/objured/ --gecos "" objured
-usermod -aG sudo objured
-
-
-echo "Change ROOT password as well? <y/N>"
-rootPassChoice="n"
-read rootPassChoice
-
-if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
 	echo ""
-	echo "/-----\         ROOT           /-----\\"
-	echo "\-----/    Password Change!    \-----/"
-	passwd root
+	echo ""
+	echo "------------------ Basic Updates and Config ( 1 / 2 ) ---------------------"
+	echo ""
+	echo ""
+
+	adduser --home /home/objured/ --gecos "" objured
+	usermod -aG sudo objured
+
+
+	echo "Change ROOT password as well? <y/N>"
+	rootPassChoice="n"
+	read rootPassChoice
+
+	if [[ $rootPassChoice == "y" || $rootPassChoice == "Y" || $rootPassChoice == "yes" || $rootPassChoice == "YES" || $rootPassChoice == "Yes" ]]; then
+		echo ""
+		echo "/-----\         ROOT           /-----\\"
+		echo "\-----/    Password Change!    \-----/"
+		passwd root
+	fi
+
+
+	# Initial update
+	apt update
+	apt install -y sudo
+
+	# Full upgrade and base system package install (including down to Ubuntu Minimal)
+	apt full-upgrade -y
+	for currPackage in $systemApps
+	do
+		sudo apt install -y $currPackage
+	done
+
+
+	# Set tmux to run upon starting shell (along with recovery)
+
+	echo 'echo ""
+	if [[ -z "$TMUX" ]]; then
+	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
+
+	  if [ -z "$keyPress" ]; then
+	    if command -v tmux>/dev/null; then
+	      if [ "$SSH_CONNECTION" != "" ]; then
+		tmux attach-session -t main || tmux new-session -s main
+	      fi
+	    fi
+	  else
+	    echo ""
+	    echo ""
+	  fi
+	fi
+	' >> ~/.bashrc
+
+
+	# Setup all the Python 3 Packages
+	sudo apt install -y software-properties-common
+
+	sudo apt install -y python3-setuptools
+	sudo apt install -y python3-all-dev
+	sudo apt install -y python3-software-properties
+
+	# Remove default PIP install and reinstall using easy_install
+	sudo apt purge -y python3-pip
+	sudo easy_install3 pip
+
+	# Update PIP packages using the python update script
+	sudo python3 pip_update.py
+
+	# Remove apps that are not needed to lighten the load
+	sudo apt purge -y transmission-*
+	sudo apt purge -y apache2
 fi
 
 
-# Initial update
-apt update
-apt install -y sudo
 
-# Full upgrade and base system package install (including down to Ubuntu Minimal)
-apt full-upgrade -y
-for currPackage in $systemApps
-do
-	sudo apt install -y $currPackage
-done
+if [[ $x11Choice == "y" ]]; then
 
-
-# Set tmux to run upon starting shell (along with recovery)
-
-echo 'echo ""
-if [[ -z "$TMUX" ]]; then
-  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
-
-  if [ -z "$keyPress" ]; then
-    if command -v tmux>/dev/null; then
-      if [ "$SSH_CONNECTION" != "" ]; then
-        tmux attach-session -t main || tmux new-session -s main
-      fi
-    fi
-  else
-    echo ""
-    echo ""
-  fi
+	echo ""
+	echo ""
+	echo "------------------ X11 Apps ---------------------"
+	echo ""
+	echo ""
+	
+	for currPackage in $x11Apps
+	do
+		sudo apt install -y $currPackage
+	done
 fi
-' >> ~/.bashrc
 
 
-# Setup all the Python 3 Packages
-sudo apt install -y software-properties-common
 
-sudo apt install -y python3-setuptools
-sudo apt install -y python3-all-dev
-sudo apt install -y python3-software-properties
+if [[ $guiChoice == "y" ]]; then
 
-# Remove default PIP install and reinstall using easy_install
-sudo apt purge -y python3-pip
-sudo easy_install3 pip
-
-# Update PIP packages using the python update script
-sudo python3 pip_update.py
-
-# Remove apps that are not needed to lighten the load
-sudo apt purge -y transmission-*
-sudo apt purge -y apache2
-
-
-# Install desktop software first
-if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskChoice == "YES" || $deskChoice == "Yes" ]]; then
+	echo ""
+	echo ""
+	echo "------------------ GUI Apps ---------------------"
+	echo ""
+	echo ""
 
 	# Install Chrome
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -P /tmp/
@@ -127,17 +198,24 @@ if [[ $deskChoice == "y" || $deskChoice == "Y" || $deskChoice == "yes" || $deskC
 	sudo apt update
 
 	# Install all desktop apps individually in case one fails
-	for currPackage in $desktopApps
+	for currPackage in $guiApps
 	do
 		sudo apt install -y $currPackage
 	done
 	
-	#sudo apt install -y $desktopApps
+	#sudo apt install -y $guiApps
 fi
 
 
+
 # Install server options
-if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || $serverChoice == "YES" || $serverChoice == "Yes" || $serverChoice == "" ]]; then
+if [[ $serverChoice == "y" ]]; then
+
+	echo ""
+	echo ""
+	echo "------------------ Server Setup ---------------------"
+	echo ""
+	echo ""
 
 	for currPackage in $serverApps
 	do
@@ -165,29 +243,38 @@ if [[ $serverChoice == "y" || $serverChoice == "Y" || $serverChoice == "yes" || 
 	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y &&  sudo apt install -y -f && sudo dpkg --configure -a && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
-# Enable UFW
-sudo ufw --force enable
+if [[ $basicChoice == "y" ]]; then
 
-# Config git while we're at it
-git config --global user.email "sellitus@gmail.com"
-git config --global user.name "Sellitus"
-# User Git 2.0+'s method
-git config --global push.default simple
+	echo ""
+	echo ""
+	echo "------------------ Basic Updates and Config ( 2 / 2 ) ---------------------"
+	echo ""
+	echo ""
 
+	# Enable UFW
+	sudo ufw --force enable
 
-# Resolve dependencies
-sudo apt install -y -f
-
-# Force configure, just in case
-sudo dpkg --configure -a
-
-# Final cleanup after all apt commands
-sudo apt autoremove -y
-sudo apt autoclean -y
+	# Config git while we're at it
+	git config --global user.email "sellitus@gmail.com"
+	git config --global user.name "Sellitus"
+	# User Git 2.0+'s method
+	git config --global push.default simple
 
 
-# Message to notify user of restart
-echo "Setup: Done  /  Restarting..."
-sleep 5
-# Final system restart
-sudo reboot
+	# Resolve dependencies
+	sudo apt install -y -f
+
+	# Force configure, just in case
+	sudo dpkg --configure -a
+
+	# Final cleanup after all apt commands
+	sudo apt autoremove -y
+	sudo apt autoclean -y
+
+
+	# Message to notify user of restart
+	echo "Setup: Done  /  Restarting..."
+	sleep 5
+	# Final system restart
+	sudo reboot
+fi
