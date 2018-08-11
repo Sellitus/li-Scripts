@@ -81,7 +81,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config ( 1 / 2 ) ---------------------"
+	echo "------------------ Basic Updates and Config A ( 1 / 5 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -159,7 +159,7 @@ if [[ $x11Choice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ X11 Apps ---------------------"
+	echo "------------------ X11 Apps ( 2 / 5 ) ---------------------"
 	echo ""
 	echo ""
 	
@@ -175,7 +175,7 @@ if [[ $guiChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ GUI Apps ---------------------"
+	echo "------------------ GUI Apps ( 3 / 5 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -207,7 +207,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Server Setup ---------------------"
+	echo "------------------ Server Setup ( 4 / 5 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -241,7 +241,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config ( 2 / 2 ) ---------------------"
+	echo "------------------ Basic Updates and Config B ( 5 / 5 ) ---------------------"
 	echo ""
 	echo ""
 
