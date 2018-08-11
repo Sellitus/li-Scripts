@@ -42,7 +42,7 @@ fi
 sure=0
 while [[ $sure -eq 0 ]]; do
 	echo ""
-	echo "Enter username to create with sudo access"
+	echo "Enter username to create/use with sudo access (may already exist)"
 	read -p ":: " username
 	username="$(echo -e "${username}" | tr -d '[:space:]')"
 	
@@ -94,7 +94,7 @@ if [[ $basicChoice == "y" ]]; then
 	read rootPassChoice
 	rootPassChoice="$(echo -e "${rootPassChoice}" | tr -d '[:space:]')"
 
-	if [[ $rootPassChoice == "" || [[ $rootPassChoice == "y" || $rootPassChoice == "Y" ]]; then
+	if [[ $rootPassChoice == "" ]] || [[ $rootPassChoice == "y" || $rootPassChoice == "Y" ]]; then
 		echo ""
 		echo "/-----\         ROOT           /-----\\"
 		echo "\-----/    Password Change!    \-----/"
