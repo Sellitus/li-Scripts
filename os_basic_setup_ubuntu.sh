@@ -19,7 +19,7 @@ basicChoice=""
 serverChoice=""
 x11Choice=""
 guiChoice=""
-
+username=""
 
 #
 # Iterate through every argument passed by user
@@ -63,8 +63,29 @@ if [[ $userInput == "" ]]; then
 	echo "4 - GUI Apps"
 	echo "    ($guiApps)"
 	echo ""
-	read userInput
+	read -p ":: " userInput
 fi
+
+sure=0
+while [[ $sure -eq 0 ]]; do
+	echo ""
+	echo "Enter username to create with sudo access"
+	read -p ":: " username
+	username="$(echo -e "${username}" | tr -d '[:space:]')"
+	
+	sureInput=""
+	echo ""
+	echo "Do you want to create the user: $username ?"
+	echo "(Y/n)"
+	read -p ":: " sureInput
+	sureInput="$(echo -e "${sureInput}" | tr -d '[:space:]')"
+	
+
+	if [[ $sureInput == "" ]] || [[ $sureInput == "y" ]] || [[ $sureInput == "Y" ]]; then
+		sure=1
+	fi
+done
+
 
 IFS=',' read -ra ADDR <<< "$userInput"
 for i in "${ADDR[@]}"; do
