@@ -119,6 +119,7 @@ if [[ $basicChoice == "y" ]]; then
 	echo 'echo ""
 	if [[ -z "$TMUX" ]]; then
 	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
+	  echo ""
 
 	  if [ -z "$keyPress" ]; then
 	    if command -v tmux>/dev/null; then
