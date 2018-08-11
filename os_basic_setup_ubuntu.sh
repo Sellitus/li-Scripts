@@ -12,6 +12,7 @@ systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench h
 serverApps="openssh-server"
 guiApps="eclipse gedit qbittorrent sublime-text tilix"
 x11Apps="xubuntu-desktop"
+vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
 
 # Initialization
@@ -19,6 +20,7 @@ basicChoice=""
 serverChoice=""
 x11Choice=""
 guiChoice=""
+vmGuestChoice=""
 username=""
 
 
@@ -35,6 +37,8 @@ if [[ $userInput == "" ]]; then
 	echo "    ($x11Apps)"
 	echo "4 - GUI Apps"
 	echo "    ($guiApps)"
+	echo "5 - VMware / VirtualBox Guest Additions"
+	echo "    ($vmGuestAdditions)"
 	echo ""
 	read -p ":: " userInput
 fi
@@ -73,6 +77,9 @@ for i in "${ADDR[@]}"; do
 	if [[ $i == "4" ]]; then
 		guiChoice="y"
 	fi
+	if [[ $i == "5" ]]; then
+		vmGuestChoice="y"
+	fi
 done
 
 
@@ -81,7 +88,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config A ( 1 / 5 ) ---------------------"
+	echo "------------------ Basic Updates and Config A ( 1 / 6 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -158,7 +165,7 @@ if [[ $x11Choice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ X11 Apps ( 2 / 5 ) ---------------------"
+	echo "------------------ X11 Apps ( 2 / 6 ) ---------------------"
 	echo ""
 	echo ""
 	
@@ -174,7 +181,7 @@ if [[ $guiChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ GUI Apps ( 3 / 5 ) ---------------------"
+	echo "------------------ GUI Apps ( 3 / 6 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -206,7 +213,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Server Setup ( 4 / 5 ) ---------------------"
+	echo "------------------ Server Setup ( 4 / 6 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -236,11 +243,28 @@ if [[ $serverChoice == "y" ]]; then
 	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt dist-upgrade -y &&  sudo apt install -y -f && sudo dpkg --configure -a && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
+
+# Install server options
+if [[ $vmGuestChoice == "y" ]]; then
+
+	echo ""
+	echo ""
+	echo "------------------ VMware / VirtualBox Guest Additions ( 5 / 6 ) ---------------------"
+	echo ""
+	echo ""
+
+	for currPackage in $vmGuestAdditions
+	do
+        	sudo apt install -y $currPackage
+	done
+fi
+
+
 if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config B ( 5 / 5 ) ---------------------"
+	echo "------------------ Basic Updates and Config B ( 6 / 6 ) ---------------------"
 	echo ""
 	echo ""
 
