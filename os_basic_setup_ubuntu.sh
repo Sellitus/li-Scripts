@@ -121,11 +121,9 @@ if [[ $basicChoice == "y" ]]; then
 	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
 	  echo ""
 
-	  if [ -z "$keyPress" ]; then
+	  if [ -z "$keyPress" ] && [ "$SSH_CONNECTION" != "" ]; then
 	    if command -v tmux>/dev/null; then
-	      if [ "$SSH_CONNECTION" != "" ]; then
-		tmux attach-session -t main || tmux new-session -s main
-	      fi
+              tmux attach-session -t main || tmux new-session -s main
 	    fi
 	  else
 	    echo ""
