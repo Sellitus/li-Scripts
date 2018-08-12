@@ -235,7 +235,6 @@ if [[ $serverChoice == "y" ]]; then
 	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
 	sudo echo "AllowUsers $username" >> /etc/ssh/sshd_config
 	sudo echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
-	sudo echo 'Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr,aes256-cbc,aes192-cbc,aes128-cbc' >> /etc/ssh/sshd_config
 	sudo echo 'Compression yes' >> /etc/ssh/sshd_config
 	sudo service ssh restart
 
