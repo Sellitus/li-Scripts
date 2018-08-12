@@ -10,8 +10,8 @@ fi
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential"
 serverApps="openssh-server"
-guiApps="eclipse gedit qbittorrent sublime-text tilix"
-x11Apps="xfce4*"
+guiApps="qbittorrent sublime-text tilix firefox gedit"
+x11Apps="gedit xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
 
@@ -193,6 +193,9 @@ if [[ $guiChoice == "y" ]]; then
 	# Sublime 3
 	wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
 	sudo apt-add-repository "deb https://download.sublimetext.com/ apt/stable/"
+	
+	wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+	echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
 
 	# Update apt cache
 	sudo apt update
