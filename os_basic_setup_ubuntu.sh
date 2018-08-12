@@ -11,7 +11,7 @@ fi
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential"
 serverApps="openssh-server"
 guiApps="eclipse gedit qbittorrent sublime-text tilix"
-x11Apps="xubuntu-desktop"
+x11Apps="xfce4*"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
 
