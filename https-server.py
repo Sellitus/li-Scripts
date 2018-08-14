@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
+# You will need to generate the certs beforehand
+# openssl req -new -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out server.crt -keyout server.key
+
 # Initialize as a client to download a file in the directory this file was run:
-# while true; do sudo wget --no-check-certificate --no-proxy --delete-after  https://10.1.2.88:4430/big.txt; done
+# while true; do sudo wget --no-check-certificate --no-proxy --delete-after  https://192.168.1.20:4430/test.txt; done
 # You might need to type in the key file password on the server once a client request is made
 
 import BaseHTTPServer, SimpleHTTPServer
@@ -13,7 +16,7 @@ import os.path
 parser = argparse.ArgumentParser()
 parser.add_argument("-port", dest="port", type=int, default=4430, help="Port to run the server on. (Default: 4430)")
 parser.add_argument("-cert", dest="cert", type=str, default="/local/labuser/certs/server.crt", help="SSL certificate file to use.")
-parser.add_argument("-key", dest="key", type=str, default="/local/labuser/certs/server_nopw.key", help="SSL key file to use.")
+parser.add_argument("-key", dest="key", type=str, default="/local/labuser/certs/server.key", help="SSL key file to use.")
 settings = parser.parse_args()
 
 if not os.path.isfile(settings.cert):
