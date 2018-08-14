@@ -124,11 +124,11 @@ if [[ $basicChoice == "y" ]]; then
 	# Set tmux to run upon starting shell (along with recovery)
 
 	echo 'echo ""
-	if [[ -z "$TMUX" ]]; then
+	if [[ -z "$TMUX" ]] && [ "$SSH_CONNECTION" != "" ]; then
 	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
 	  echo ""
 
-	  if [ -z "$keyPress" ] && [ "$SSH_CONNECTION" != "" ]; then
+	  if [ -z "$keyPress" ]; then
 	    if command -v tmux>/dev/null; then
               tmux attach-session -t main || tmux new-session -s main
 	    fi
