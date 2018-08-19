@@ -242,7 +242,7 @@ if [[ $serverChoice == "y" ]]; then
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
-	crontab -l | { cat; echo "0 6 * * * sudo apt install -y unattended-upgrades && sudo apt update && sudo apt dist-upgrade -y &&  sudo apt install -y -f && sudo dpkg --configure -a && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
+	crontab -l | { cat; echo "0 6 * * * sudo apt update && sudo apt install -y unattended-upgrades && sudo apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade -y &&  sudo apt install -y -f && sudo dpkg --configure -a && sudo apt autoremove -y >/dev/null 2>&1"; } | crontab -
 fi
 
 
