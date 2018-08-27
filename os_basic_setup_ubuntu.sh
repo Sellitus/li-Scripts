@@ -238,7 +238,6 @@ if [[ $serverChoice == "y" ]]; then
 	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
 	sudo echo "AllowUsers $username" >> /etc/ssh/sshd_config
 	sudo echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
-	sudo echo 'Compression yes' >> /etc/ssh/sshd_config
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
