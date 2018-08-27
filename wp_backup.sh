@@ -16,6 +16,8 @@
 # vmtouch -dlv /var/lib/mysql/
 # vmtouch -dlv /etc/apache2/
 # 
+# To backup offsite, setup RSA keypair and put this in as crontab job on backup machine
+# 30 5 * * * rsync -chavzP --stats objured@obju.red:/home/objured/.wp_backup/ /home/sellitus/wp_backup/
 
 
 
@@ -26,7 +28,7 @@ host="localhost"
 db_name="wp_myblog"
 
 # Other options
-backup_path=/root/.wp_backup/
+backup_path=/home/$user/.wp_backup/
 date=$(date +"%d-%b-%Y")
 backup_days="180"
 
@@ -41,3 +43,8 @@ sudo mysqldump --host=$host $db_name > $backup_path/$db_name-$date.sql
 
 # Delete files older than 30 days
 sudo find $backup_path/* -mtime +$backup_days -exec rm {} \;
+
+# Change ownership of files to user
+chown -R $user:$user $backup_path
+
+
