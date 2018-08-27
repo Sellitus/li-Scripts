@@ -33,15 +33,25 @@ date=$(date +"%d-%b-%Y")
 backup_days="180"
 
 # Create backup directory if it does not already exist
-sudo mkdir -p "$backup_path"
+sudo mkdir -p "$backup_path/tmp/"
 
 # Set default file permissions (not for root use)
 # umask 177
 
 # Dump database into SQL file
-sudo mysqldump --host=$host $db_name > $backup_path/$db_name-$date.sql
+sudo mysqldump --host=$host $db_name > $backup_path/tmp/$db_name-$date.sql
 
-# Delete files older than 30 days
+# Copy wordpress files and apache config backups to the backup folder
+sudo cp -R /var/www/html/ $backup_path/tmp/
+sudo cp -R /etc/apache2/ $backup_path/tmp/
+
+# Compress all the files into a tar
+tar -zcf $backup_path/wp_backup_$date.tar.gz $backup_path/tmp/
+
+# Cleanup all the files
+sudo rm -rf $backup_path/tmp/
+
+# Delete files older than <backup_days>
 sudo find $backup_path/* -mtime +$backup_days -exec rm {} \;
 
 # Change ownership of files to user
