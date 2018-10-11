@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Initialization
-cppChoice=""
-pythonChoice=""
+cppChoice="n"
+pythonChoice="y"
 
 # Iterate through every argument passed by user
 for arg in "$@"
@@ -31,9 +31,10 @@ fi
 
 
 # Install Atom's Ubuntu package
-sudo add-apt-repository -y ppa:webupd8team/atom
+#sudo add-apt-repository -y ppa:webupd8team/atom
 sudo apt update
-sudo apt install -y atom
+#sudo apt install -y atom
+sudo snap install --classic atom
 
 
 # Install Atom packages
@@ -75,6 +76,3 @@ if [[ $pythonChoice == "y" || $pythonChoice == "Y" || $pythonChoice == "yes" || 
 	apm install linter-pylama
 
 fi
-
-
-
