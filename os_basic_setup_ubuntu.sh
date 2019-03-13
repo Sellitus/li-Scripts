@@ -8,7 +8,7 @@ fi
 
 
 # User editable options
-systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish"
+systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish virtualenv virtualenvwrapper"
 serverApps="openssh-server"
 guiApps="qbittorrent sublime-text tilix firefox gedit"
 x11Apps="gedit xfce4 xfce4-goodies tightvncserver"
