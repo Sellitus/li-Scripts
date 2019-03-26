@@ -43,24 +43,6 @@ if [[ $userInput == "" ]]; then
 	read -p ":: " userInput
 fi
 
-sure=0
-while [[ $sure -eq 0 ]]; do
-	echo ""
-	echo "Enter username to create/use with sudo access (may already exist)"
-	read -p ":: " username
-	username="$(echo -e "${username}" | tr -d '[:space:]')"
-	
-	sureInput=""
-	echo ""
-	echo "Do you want to create the user: $username ? <Y/n>"
-	read -p ":: " sureInput
-	sureInput="$(echo -e "${sureInput}" | tr -d '[:space:]')"
-	
-
-	if [[ $sureInput == "" ]] || [[ $sureInput == "y" ]] || [[ $sureInput == "Y" ]]; then
-		sure=1
-	fi
-done
 
 
 IFS=',' read -ra ADDR <<< "$userInput"
@@ -91,6 +73,22 @@ if [[ $basicChoice == "y" ]]; then
 	echo "------------------ Basic Updates and Config A ( 1 / 6 ) ---------------------"
 	echo ""
 	echo ""
+
+	sure=0
+	while [[ $sure -eq 0 ]]; do
+		echo ""
+		echo "Enter username to create/use with sudo access (may already exist)"
+		read -p ":: " username
+		username="$(echo -e "${username}" | tr -d '[:space:]')"
+	
+		sureInput=""
+		echo ""
+		echo "Do you want to create the user: $username ? <Y/n>"
+		read -p ":: " sureInput
+		sureInput="$(echo -e "${sureInput}" | tr -d '[:space:]')"
+	
+		sure=1
+	done
 
 	adduser --home /home/$username/ --gecos "" $username
 	usermod -aG sudo $username
