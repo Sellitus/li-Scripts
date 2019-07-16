@@ -121,21 +121,63 @@ if [[ $basicChoice == "y" ]]; then
 
 	# Set tmux to run upon starting shell (along with recovery)
 
-	echo 'echo ""
-	if [[ -z "$TMUX" ]] && [ "$SSH_CONNECTION" != "" ]; then
-	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
-	  echo ""
+# 	echo 'echo ""
+# 	if [[ -z "$TMUX" ]] && [ "$SSH_CONNECTION" != "" ]; then
+# 	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
+# 	  echo ""
 
-	  if [ -z "$keyPress" ]; then
-	    if command -v tmux>/dev/null; then
-              tmux attach-session -t main || tmux new-session -s main
-	    fi
-	  else
-	    echo ""
-	    echo ""
-	  fi
-	fi
-	' >> ~/.bashrc
+# 	  if [ -z "$keyPress" ]; then
+# 	    if command -v tmux>/dev/null; then
+#               tmux attach-session -t main || tmux new-session -s main
+# 	    fi
+# 	  else
+# 	    echo ""
+# 	    echo ""
+# 	  fi
+# 	fi
+# 	' >> ~/.bashrc
+	
+	
+	echo 'function tmux1 ()
+{
+	tmux attach-session -t main1 || tmux new-session -s main1
+}' >> ~/.bashrc
+	echo 'function tmux2 ()
+{
+	tmux attach-session -t main2 || tmux new-session -s main2
+}' >> ~/.bashrc
+	echo 'function tmux3 ()
+{
+	tmux attach-session -t main3 || tmux new-session -s main3
+}' >> ~/.bashrc
+	echo 'function tmux4 ()
+{
+	tmux attach-session -t main4 || tmux new-session -s main4
+}' >> ~/.bashrc
+	echo 'function tmux5 ()
+{
+	tmux attach-session -t main5 || tmux new-session -s main5
+}' >> ~/.bashrc
+	echo 'function tmux6 ()
+{
+	tmux attach-session -t main6 || tmux new-session -s main6
+}' >> ~/.bashrc
+	echo 'function tmux7 ()
+{
+	tmux attach-session -t main7 || tmux new-session -s main7
+}' >> ~/.bashrc
+	echo 'function tmux8 ()
+{
+	tmux attach-session -t main8 || tmux new-session -s main8
+}' >> ~/.bashrc
+	echo 'function tmux9 ()
+{
+	tmux attach-session -t main9 || tmux new-session -s main9
+}' >> ~/.bashrc
+	echo 'function tmux10 ()
+{
+	tmux attach-session -t main10 || tmux new-session -s main10
+}' >> ~/.bashrc
 
 
 	# Setup all the Python 3 Packages
