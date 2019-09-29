@@ -188,8 +188,8 @@ if [[ $basicChoice == "y" ]]; then
 	sudo apt install -y python3-software-properties
 
 	# Remove default PIP install and reinstall using easy_install
-	sudo apt purge -y python3-pip
-	sudo easy_install3 pip
+	sudo apt install -y python3-pip
+	# sudo easy_install3 pip
 
 	# Update PIP packages using the python update script
 	sudo python3 pip_update.py
