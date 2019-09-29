@@ -63,5 +63,8 @@ echo ""
 echo "---Speedtest---"
 echo ""
 
-python3 speedtest-cli/speedtest.py --server 3501
+sudo apt update
+sudo apt install -y python3-pip
+yes | sudo pip3 install speedtest-cli
+speedtest-cli
 
