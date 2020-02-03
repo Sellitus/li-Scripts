@@ -17,6 +17,7 @@ vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
 # Initialization
 basicChoice=""
+mountChoice=""
 serverChoice=""
 x11Choice=""
 guiChoice=""
@@ -31,13 +32,15 @@ if [[ $userInput == "" ]]; then
 	echo "EXAMPLE: 1,2,3"
 	echo "1 - Basic Updates and Config"
 	echo "    ($systemApps)"
-	echo "2 - Server Setup"
+	echo "2 - Mount Remote ~/obju.red/ Directory"
 	echo "    ($serverApps)"
-	echo "3 - X11 Apps"
+	echo "3 - Server Setup"
+	echo "    ($serverApps)"
+	echo "4 - X11 Apps"
 	echo "    ($x11Apps)"
-	echo "4 - GUI Apps"
+	echo "5 - GUI Apps"
 	echo "    ($guiApps)"
-	echo "5 - VMware / VirtualBox Guest Additions"
+	echo "6 - VMware / VirtualBox Guest Additions"
 	echo "    ($vmGuestAdditions)"
 	echo ""
 	read -p ":: " userInput
@@ -51,15 +54,18 @@ for i in "${ADDR[@]}"; do
 		basicChoice="y"
 	fi
 	if [[ $i == "2" ]]; then
-		serverChoice="y"
+		mountChoice="y"
 	fi
 	if [[ $i == "3" ]]; then
-		x11Choice="y"
+		serverChoice="y"
 	fi
 	if [[ $i == "4" ]]; then
-		guiChoice="y"
+		x11Choice="y"
 	fi
 	if [[ $i == "5" ]]; then
+		guiChoice="y"
+	fi
+	if [[ $i == "6" ]]; then
 		vmGuestChoice="y"
 	fi
 done
@@ -70,7 +76,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config A ( 1 / 6 ) ---------------------"
+	echo "------------------ Basic Updates and Config A ( 1 / 7 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -205,11 +211,27 @@ fi
 
 
 
+if [[ $mountChoice == "y" ]]; then
+
+	echo ""
+	echo ""
+	echo "------------------ Mount Remote ~/obju.red/ Directory ( 2 / 7 ) ---------------------"
+	echo ""
+	echo ""
+	
+	for currPackage in $x11Apps
+	do
+		sudo apt install -y $currPackage
+	done
+fi
+
+
+
 if [[ $x11Choice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ X11 Apps ( 2 / 6 ) ---------------------"
+	echo "------------------ X11 Apps ( 3 / 7 ) ---------------------"
 	echo ""
 	echo ""
 	
@@ -225,7 +247,7 @@ if [[ $guiChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ GUI Apps ( 3 / 6 ) ---------------------"
+	echo "------------------ GUI Apps ( 4 / 7 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -253,7 +275,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Server Setup ( 4 / 6 ) ---------------------"
+	echo "------------------ Server Setup ( 5 / 7 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -287,7 +309,7 @@ if [[ $vmGuestChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ VMware / VirtualBox Guest Additions ( 5 / 6 ) ---------------------"
+	echo "------------------ VMware / VirtualBox Guest Additions ( 6 / 7 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -302,7 +324,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config B ( 6 / 6 ) ---------------------"
+	echo "------------------ Basic Updates and Config B ( 7 / 7 ) ---------------------"
 	echo ""
 	echo ""
 
