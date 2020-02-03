@@ -105,7 +105,11 @@ if [[ $basicChoice == "y" ]]; then
 		echo "\-----/    Password Change!    \-----/"
 		passwd root
 	fi
-
+	
+	# Create remote storage folder
+	mkdir /home/$username/obju.red/
+	chown $username:$username /home/$username/obju.red/
+	chmod 600 /home/$username/obju.red/
 
 	# Initial update
 	apt update
