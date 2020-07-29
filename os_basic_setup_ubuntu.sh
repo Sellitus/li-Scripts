@@ -10,8 +10,8 @@ fi
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish virtualenv virtualenvwrapper"
 serverApps="openssh-server"
-guiApps="qbittorrent sublime-text tilix firefox gedit"
-x11Apps="gedit xfce4 xfce4-goodies tightvncserver"
+guiApps="qbittorrent sublime-text tilix firefox git-cola"
+x11Apps="xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
 
@@ -31,7 +31,7 @@ if [[ $userInput == "" ]]; then
 	echo "Choose some or all of the options below. Separate your choices by comma with no spaces."
 	echo "EXAMPLE: 1,2,3"
 	echo "1 - Basic Updates and Config"
-	echo "    ($systemApps)"
+	echo "    ($systemApps) + Ananconda"
 	echo "2 - Mount Remote ~/obju.red/ Directory"
 	echo "    ($serverApps)"
 	echo "3 - Server Setup"
@@ -39,7 +39,7 @@ if [[ $userInput == "" ]]; then
 	echo "4 - X11 Apps"
 	echo "    ($x11Apps)"
 	echo "5 - GUI Apps"
-	echo "    ($guiApps)"
+	echo "    ($guiApps) + Pycharm-CE"
 	echo "6 - VMware / VirtualBox Guest Additions"
 	echo "    ($vmGuestAdditions)"
 	echo ""
@@ -207,6 +207,9 @@ if [[ $basicChoice == "y" ]]; then
 	# Remove apps that are not needed to lighten the load
 	sudo apt purge -y transmission-*
 	sudo apt purge -y apache2
+	
+	# Install Anaconda
+	
 fi
 
 
@@ -255,6 +258,13 @@ if [[ $guiChoice == "y" ]]; then
 	wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -P /tmp/
 	sudo dpkg -i /tmp/google-chrome-stable_current_amd64.deb
 	rm /tmp/google-chrome-stable_current_amd64.deb
+	
+	# Install Sublime Text
+	wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+	sudo apt-add-repository "deb https://download.sublimetext.com/ apt/stable/"
+	
+	# Install Pycharm Community Edition
+	sudo snap install pycharm-community --classic
 
 	# Update apt cache
 	sudo apt update
