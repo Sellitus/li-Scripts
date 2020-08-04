@@ -299,7 +299,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	# Private Key
 	sudo mkdir /home/$username/.ssh
-	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD8wQ8WBHjZx9Bq7uH2x79rejulD4dv0CFlbgJ3zVRnIGWWEvCvEWYfQN9L8uKLeQI3pBm9vK508NPdRcQV4DFEHDfyDdVQdMeJyGrlhYK4foOCSrV7N1y99MtCF53mV6mUdXrnHNEw7Sk4M1Ji1RNgSgt86JE/FuzcIjsnL1cySqX4yIP4fRs5E+r4K4Ctjly1qvFKUZjYodS+b1jE7IEel3O2Symt/SjA1MeB9J29eK+Ztjmgmd+Q0zkoGGPunSsXP0SaDCTQJkBKv6WpTibmq1SeWWE30D1jqSFkq8L8i0+I8ZcF1JyJPXv0kaRczv8ibb8ryVeW/95rtBFdF7ig+jcE/MZVCa85Gd5k6LAvevDb/FLubrKE7uTo6qYBEMzgL6R8Uasc84AxnFI7PWju/+fyDxc5uvuGPyEPxvJcfhpvxODf4z6N+eHumHiWAhVqtOfyLNNJ1UgnOcZi1fF3YqHhUmyr+EzflYSvV68LjYh36xjzNKN9VBIzbxAjeawJdn9sa8nMsqdGJFtmqHs4PCVRzbvkKtEIBepvVwldxzJnmsHgDPMZrf9atlzwojIDamcgQ3TdZj1V2V42PZKtPW5f1qRHRAJndKJ5xhEminZedEJrQL0TE703QvaIrO7ti8qAxC8QnAf9dckE6n0uBWUXVij6U4/6Xy3FyC1icw==" > /home/$username/.ssh/authorized_keys
+	sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINRrATacEhBkF626/ABvBJzGMtbVNxNIShkPmZwszxkk" > /home/$username/.ssh/authorized_keys
 	sudo chmod 700 /home/$username/.ssh/
 	sudo chmod 600 /home/$username/.ssh/authorized_keys
 	sudo chown -R $username:$username /home/$username/.ssh/
