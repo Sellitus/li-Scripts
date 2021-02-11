@@ -32,8 +32,6 @@ if [[ $userInput == "" ]]; then
 	echo "EXAMPLE: 1,2,3"
 	echo "1 - Basic Updates and Config"
 	echo "    ($systemApps) + Ananconda"
-	echo "2 - Mount Remote ~/obju.red/ Directory"
-	echo "    ($serverApps)"
 	echo "3 - Server Setup"
 	echo "    ($serverApps)"
 	echo "4 - X11 Apps"
@@ -52,9 +50,6 @@ IFS=',' read -ra ADDR <<< "$userInput"
 for i in "${ADDR[@]}"; do
 	if [[ $i == "1" ]]; then
 		basicChoice="y"
-	fi
-	if [[ $i == "2" ]]; then
-		mountChoice="y"
 	fi
 	if [[ $i == "3" ]]; then
 		serverChoice="y"
@@ -112,11 +107,6 @@ if [[ $basicChoice == "y" ]]; then
 		passwd root
 	fi
 	
-	# Create remote storage folder
-	mkdir /home/$username/obju.red/
-	chown $username:$username /home/$username/obju.red/
-	chmod 600 /home/$username/obju.red/
-
 	# Initial update
 	apt update
 	apt install -y sudo
@@ -210,22 +200,6 @@ if [[ $basicChoice == "y" ]]; then
 	
 	# Install Anaconda
 	
-fi
-
-
-
-if [[ $mountChoice == "y" ]]; then
-
-	echo ""
-	echo ""
-	echo "------------------ Mount Remote ~/obju.red/ Directory ( 2 / 7 ) ---------------------"
-	echo ""
-	echo ""
-	
-	for currPackage in $x11Apps
-	do
-		sudo apt install -y $currPackage
-	done
 fi
 
 
