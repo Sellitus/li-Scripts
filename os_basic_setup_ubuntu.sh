@@ -32,13 +32,13 @@ if [[ $userInput == "" ]]; then
 	echo "EXAMPLE: 1,2,3"
 	echo "1 - Basic Updates and Config"
 	echo "    ($systemApps) + Ananconda"
-	echo "3 - Server Setup"
+	echo "2 - Server Setup"
 	echo "    ($serverApps)"
-	echo "4 - X11 Apps"
+	echo "3 - X11 Apps"
 	echo "    ($x11Apps)"
-	echo "5 - GUI Apps"
+	echo "4 - GUI Apps"
 	echo "    ($guiApps) + Pycharm-CE"
-	echo "6 - VMware / VirtualBox Guest Additions"
+	echo "5 - VMware / VirtualBox Guest Additions"
 	echo "    ($vmGuestAdditions)"
 	echo ""
 	read -p ":: " userInput
@@ -51,16 +51,16 @@ for i in "${ADDR[@]}"; do
 	if [[ $i == "1" ]]; then
 		basicChoice="y"
 	fi
-	if [[ $i == "3" ]]; then
+	if [[ $i == "2" ]]; then
 		serverChoice="y"
 	fi
-	if [[ $i == "4" ]]; then
+	if [[ $i == "3" ]]; then
 		x11Choice="y"
 	fi
-	if [[ $i == "5" ]]; then
+	if [[ $i == "4" ]]; then
 		guiChoice="y"
 	fi
-	if [[ $i == "6" ]]; then
+	if [[ $i == "5" ]]; then
 		vmGuestChoice="y"
 	fi
 done
