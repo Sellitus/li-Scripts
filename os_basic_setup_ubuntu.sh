@@ -278,9 +278,22 @@ if [[ $serverChoice == "y" ]]; then
 	sudo chmod 600 /home/$username/.ssh/authorized_keys
 	sudo chown -R $username:$username /home/$username/.ssh/
 	# Only allow $username with a key to connect
-	sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+	#sudo sed -i 's/PermitRootLogin/PermitRootLogin no/g' /etc/ssh/sshd_config
+	#sudo sed -i 's/PasswordAuthentication/PasswordAuthentication no/g' /etc/ssh/sshd_config
+	#sudo sed -i 's/ChallengeResponseAuthentication/ChallengeResponseAuthentication no/g' /etc/ssh/sshd_config
+	#sudo sed -i 's/PermitEmptyPasswords/PermitEmptyPasswords no/g' /etc/ssh/sshd_config
+	# Add settings to the start of the file to override
+	sudo sed -i "1iAllowUsers $username" /etc/ssh/sshd_config
+	sudo sed -i "1iPermitRootLogin no" /etc/ssh/sshd_config
+	sudo sed -i "1iPasswordAuthentication no" /etc/ssh/sshd_config
+	sudo sed -i "1iChallengeResponseAuthentication no" /etc/ssh/sshd_config
+	sudo sed -i "1iPermitEmptyPasswords no" /etc/ssh/sshd_config
+	# Add the settings to the end of sshd_config because why not
 	sudo echo "AllowUsers $username" >> /etc/ssh/sshd_config
+	sudo echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
 	sudo echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config
+	sudo echo 'ChallengeResponseAuthentication no' >> /etc/ssh/sshd_config
+	sudo echo 'PermitEmptyPasswords no' >> /etc/ssh/sshd_config
 	sudo service ssh restart
 
 	# Add auto-update crontab job (6AM full update)
