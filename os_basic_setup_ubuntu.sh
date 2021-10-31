@@ -107,6 +107,8 @@ if [[ $basicChoice == "y" ]]; then
 		passwd root
 	fi
 	
+	timedatectl set-timezone America/Chicago
+	
 	# Initial update
 	apt update
 	apt install -y sudo
