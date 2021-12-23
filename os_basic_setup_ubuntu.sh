@@ -10,7 +10,7 @@ fi
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish virtualenv virtualenvwrapper"
 serverApps="openssh-server"
-guiApps="qbittorrent sublime-text tilix firefox git-cola"
+guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
