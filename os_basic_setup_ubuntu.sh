@@ -275,7 +275,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	# Private Key
 	sudo mkdir /home/$username/.ssh
-	sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINRrATacEhBkF626/ABvBJzGMtbVNxNIShkPmZwszxkk" > /home/$username/.ssh/authorized_keys
+	sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINgvknZoaJHPUrlpdDT4euo6JX8FEhCLau5mMmwGwDun sellitus@main1633365964" > /home/$username/.ssh/authorized_keys
 	sudo chmod 700 /home/$username/.ssh/
 	sudo chmod 600 /home/$username/.ssh/authorized_keys
 	sudo chown -R $username:$username /home/$username/.ssh/
