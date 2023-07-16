@@ -182,12 +182,20 @@ if [[ $basicChoice == "y" ]]; then
 }' >> ~/.bashrc
 
 
+	# Replace Python 3.10 with 3.11
+	sudo apt-get install python3.11
+
+	sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+	sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 10
+
+
 	# Setup all the Python 3 Packages
 	sudo apt install -y software-properties-common
 
 	sudo apt install -y python3-setuptools
 	sudo apt install -y python3-all-dev
 	sudo apt install -y python3-software-properties
+	sudo apt install -y python3.11-venv
 
 	# Remove default PIP install and reinstall using easy_install
 	sudo apt install -y python3-pip
