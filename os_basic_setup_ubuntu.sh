@@ -10,7 +10,7 @@ fi
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish virtualenv virtualenvwrapper"
 serverApps="openssh-server"
-guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola"
+guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 
@@ -185,6 +185,8 @@ if [[ $basicChoice == "y" ]]; then
 
 	# Setup all the Python 3 Packages
 	sudo apt install -y software-properties-common
+	sudo apt install -y apt-transport-https 
+	sudo apt install -y wget
 
 	sudo apt install -y python3-setuptools
 	sudo apt install -y python3-all-dev
@@ -243,6 +245,9 @@ if [[ $guiChoice == "y" ]]; then
 	
 	# Install Pycharm Community Edition
 	sudo snap install pycharm-community --classic
+
+	# Install VSCode
+	wget -O- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/vscode.gpg
 
 	# Update apt cache
 	sudo apt update
