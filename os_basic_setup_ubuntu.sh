@@ -334,11 +334,20 @@ if [[ $basicChoice == "y" ]]; then
 	echo ""
 	echo ""
 
+ 	# Get internet adapter with the default route
+  	default_interface=$(ip route | grep default | head -n 1 | awk '{print $5}')
+
  	# Prevent docker from opening ports publicly, may prevent docker containers from being able to expose ports publicly
- 	echo '{
-  "iptables": false,
-  "ip6tables": false
-}' | sudo tee -a /etc/docker/daemon.json
+ 	echo "# Put Docker behind UFW
+*filter
+:DOCKER-USER - [0:0]
+:ufw-user-input - [0:0]
+
+-A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-USER -m conntrack --ctstate INVALID -j DROP
+-A DOCKER-USER -i $default_interface -j ufw-user-input
+-A DOCKER-USER -i $default_interface -j DROP
+COMMIT" | sudo tee -a /etc/ufw/after.rules
 	sudo systemctl restart docker
 
 	# Enable UFW
