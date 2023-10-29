@@ -8,7 +8,7 @@ fi
 
 
 # User editable options
-systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop build-essential fish virtualenv virtualenvwrapper docker.io"
+systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io"
 serverApps="openssh-server"
 guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
@@ -22,6 +22,7 @@ serverChoice=""
 x11Choice=""
 guiChoice=""
 vmGuestChoice=""
+preventRebootChoice=""
 username=""
 
 
@@ -40,6 +41,7 @@ if [[ $userInput == "" ]]; then
 	echo "    ($guiApps) + Pycharm-CE"
 	echo "5 - VMware / VirtualBox Guest Additions"
 	echo "    ($vmGuestAdditions)"
+ 	echo "6 - Prevent Reboot"
 	echo ""
 	read -p ":: " userInput
 fi
@@ -62,6 +64,9 @@ for i in "${ADDR[@]}"; do
 	fi
 	if [[ $i == "5" ]]; then
 		vmGuestChoice="y"
+	fi
+ 	if [[ $i == "6" ]]; then
+		preventRebootChoice="y"
 	fi
 done
 
@@ -120,6 +125,19 @@ if [[ $basicChoice == "y" ]]; then
 		sudo apt install -y $currPackage
 	done
 
+ 	# Install NeoVim
+ 	sudo add-apt-repository ppa:neovim-ppa/unstable -y
+	sudo apt install -y neovim
+
+ 	# Install LazyGit
+ 	sudo apt-get install -y libssl-dev libreadline-dev zlib1g-dev
+   	LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+	curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+ 	sudo tar -xf lazygit.tar.gz -C /usr/local/bin/
+
+  	# Install LunarVim
+  	echo '\n\n\n' | LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
+   	echo 'export PATH=/home/sellitus//.local/bin:$PATH' >> ~/.bashrc
 
 	# Set tmux to run upon starting shell (along with recovery)
 
@@ -371,9 +389,11 @@ COMMIT" | sudo tee -a /etc/ufw/after.rules
 	sudo apt autoclean -y
 
 
-	# Message to notify user of restart
-	echo "Setup: Done  /  Restarting..."
-	sleep 5
-	# Final system restart
-	sudo reboot
+ 	if [[ $preventRebootChoice != "y" ]]; then
+		# Message to notify user of restart
+		echo "Setup: Done  /  Restarting..."
+		sleep 5
+		# Final system restart
+		sudo reboot
+  	fi
 fi
