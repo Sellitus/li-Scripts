@@ -113,6 +113,8 @@ if [[ $basicChoice == "y" ]]; then
 	fi
 	
 	timedatectl set-timezone America/Chicago
+
+  	cp bashrc /home/$username/.bashrc
 	
 	# Initial update
 	apt update
