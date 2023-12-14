@@ -13,6 +13,7 @@ serverApps="openssh-server"
 guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
+hyperVGuestAdditions="linux-virtual linux-cloud-tools-virtual linux-tools-virtual"
 
 
 # Initialization
@@ -22,6 +23,7 @@ serverChoice=""
 x11Choice=""
 guiChoice=""
 vmGuestChoice=""
+hyperVGuestChoice=""
 preventRebootChoice=""
 username=""
 
@@ -41,7 +43,9 @@ if [[ $userInput == "" ]]; then
 	echo "    ($guiApps) + Pycharm-CE"
 	echo "5 - VMware / VirtualBox Guest Additions"
 	echo "    ($vmGuestAdditions)"
- 	echo "6 - Prevent Reboot"
+	echo "6 - Hyper-V Guest Additions"
+	echo "    ($hyperVGuestAdditions)"
+ 	echo "7 - Prevent Reboot"
 	echo ""
 	read -p ":: " userInput
 fi
@@ -65,7 +69,10 @@ for i in "${ADDR[@]}"; do
 	if [[ $i == "5" ]]; then
 		vmGuestChoice="y"
 	fi
- 	if [[ $i == "6" ]]; then
+	if [[ $i == "6" ]]; then
+		hyperVGuestChoice="y"
+	fi
+ 	if [[ $i == "7" ]]; then
 		preventRebootChoice="y"
 	fi
 done
@@ -76,7 +83,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config A ( 1 / 7 ) ---------------------"
+	echo "------------------ Basic Updates and Config A ( 1 / 8 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -234,7 +241,7 @@ if [[ $x11Choice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ X11 Apps ( 3 / 7 ) ---------------------"
+	echo "------------------ X11 Apps ( 3 / 8 ) ---------------------"
 	echo ""
 	echo ""
 	
@@ -250,7 +257,7 @@ if [[ $guiChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ GUI Apps ( 4 / 7 ) ---------------------"
+	echo "------------------ GUI Apps ( 4 / 8 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -288,7 +295,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Server Setup ( 5 / 7 ) ---------------------"
+	echo "------------------ Server Setup ( 5 / 8 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -330,12 +337,11 @@ if [[ $serverChoice == "y" ]]; then
 fi
 
 
-# Install server options
 if [[ $vmGuestChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ VMware / VirtualBox Guest Additions ( 6 / 7 ) ---------------------"
+	echo "------------------ VMware / VirtualBox Guest Additions ( 6 / 8 ) ---------------------"
 	echo ""
 	echo ""
 
@@ -346,11 +352,34 @@ if [[ $vmGuestChoice == "y" ]]; then
 fi
 
 
+if [[ $hyperVGuestChoice == "y" ]]; then
+
+	echo ""
+	echo ""
+	echo "------------------ Hyper-V Guest Additions ( 7 / 8 ) ---------------------"
+	echo ""
+	echo ""
+
+	echo "hv_utils" | sudo tee -a /etc/initramfs-tools/modules
+	echo "hv_vmbus" | sudo tee -a /etc/initramfs-tools/modules
+	echo "hv_storvsc" | sudo tee -a /etc/initramfs-tools/modules
+	echo "hv_blkvsc" | sudo tee -a /etc/initramfs-tools/modules
+	echo "hv_netvsc" | sudo tee -a /etc/initramfs-tools/modules
+
+	for currPackage in $hyperVGuestAdditions
+	do
+        	sudo apt install -y $currPackage
+	done
+
+	sudo update-initramfs -u
+fi
+
+
 if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config B ( 7 / 7 ) ---------------------"
+	echo "------------------ Basic Updates and Config B ( 8 / 8 ) ---------------------"
 	echo ""
 	echo ""
 
