@@ -274,7 +274,7 @@ if [[ $guiChoice == "y" ]]; then
 	sudo snap install pycharm-community --classic
 
 	# Install VSCode
-	wget -O- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/vscode.gpg
+	sudo snap install code --classic
 
 	# Update apt cache
 	sudo apt update
