@@ -135,10 +135,9 @@ if [[ $basicChoice == "y" ]]; then
 	done
 
  	# Install NeoVim
-  sudo flatpak remote-add -y --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-  sudo flatpak install -y flathub io.neovim.nvim
+  	sudo flatpak remote-add -y --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  	sudo flatpak install -y flathub io.neovim.nvim
 	sudo ln -s /var/lib/flatpak/app/io.neovim.nvim/current/active/export/bin/io.neovim.nvim /home/sellitus/.local/bin/nvim
-
 
  	# sudo add-apt-repository ppa:neovim-ppa/unstable -y
 	# sudo apt install -y neovim
