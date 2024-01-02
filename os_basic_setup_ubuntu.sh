@@ -8,7 +8,7 @@ fi
 
 
 # User editable options
-systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io"
+systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io snapd flatpak"
 serverApps="openssh-server"
 guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
@@ -135,8 +135,13 @@ if [[ $basicChoice == "y" ]]; then
 	done
 
  	# Install NeoVim
- 	sudo add-apt-repository ppa:neovim-ppa/unstable -y
-	sudo apt install -y neovim
+  sudo flatpak remote-add -y --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  sudo flatpak install -y flathub io.neovim.nvim
+	sudo ln -s /var/lib/flatpak/app/io.neovim.nvim/current/active/export/bin/io.neovim.nvim /home/sellitus/.local/bin/nvim
+
+
+ 	# sudo add-apt-repository ppa:neovim-ppa/unstable -y
+	# sudo apt install -y neovim
 
  	# Install LazyGit
  	sudo apt-get install -y libssl-dev libreadline-dev zlib1g-dev
@@ -146,7 +151,7 @@ if [[ $basicChoice == "y" ]]; then
 
   	# Install LunarVim
   	echo '\n\n\n' | LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
-   	echo 'export PATH=/home/sellitus//.local/bin:$PATH' >> ~/.bashrc
+   	echo 'export PATH=/home/sellitus/.local/bin:$PATH' >> ~/.bashrc
 
 	# Set tmux to run upon starting shell (along with recovery)
 
