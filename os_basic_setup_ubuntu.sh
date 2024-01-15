@@ -8,7 +8,7 @@ fi
 
 
 # User editable options
-systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io snapd flatpak"
+systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io snapd flatpak wget gpg apt-transport-https"
 serverApps="openssh-server"
 guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
@@ -278,7 +278,10 @@ if [[ $guiChoice == "y" ]]; then
 	sudo snap install pycharm-community --classic
 
 	# Install VSCode
-	sudo snap install code --classic
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+	rm -f packages.microsoft.gpg
 
 	# Update apt cache
 	sudo apt update
