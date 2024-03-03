@@ -134,6 +134,10 @@ if [[ $basicChoice == "y" ]]; then
 		sudo apt install -y $currPackage
 	done
 
+	# Upgrade npm and nodejs
+	sudo npm install -g n
+	sudo n lts
+
  	# Install NeoVim
   	sudo flatpak remote-add -y --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
   	sudo flatpak install -y flathub io.neovim.nvim
