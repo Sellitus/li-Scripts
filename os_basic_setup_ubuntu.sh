@@ -299,7 +299,8 @@ if [[ $guiChoice == "y" ]]; then
 	code --install-extension vscjava.vscode-java-pack
 	code --install-extension vscjava.vscode-gradle
 	code --install-extension golang.go
-
+	code --install-extension continue.continue
+	
 	# Update apt cache
 	sudo apt update
 
