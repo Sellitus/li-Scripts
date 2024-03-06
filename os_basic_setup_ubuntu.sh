@@ -287,6 +287,19 @@ if [[ $guiChoice == "y" ]]; then
 	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 	rm -f packages.microsoft.gpg
 
+	# Install VSCode plugins
+	code --install-extension ms-python.python
+	code --install-extension njqdev.vscode-python-typehint
+	code --install-extension ms-toolsai.jupyter
+	code --install-extension donjayamanne.python-extension-pack
+	code --install-extension huggingface.huggingface-vscode
+	code --install-extension visualstudioexptteam.vscodeintellicode
+	code --install-extension github.copilot
+	code --install-extension dp-faces.dpico-theme
+	code --install-extension vscjava.vscode-java-pack
+	code --install-extension vscjava.vscode-gradle
+	code --install-extension golang.go
+
 	# Update apt cache
 	sudo apt update
 
