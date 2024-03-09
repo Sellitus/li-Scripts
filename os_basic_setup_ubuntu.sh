@@ -141,7 +141,7 @@ if [[ $basicChoice == "y" ]]; then
  	# Install NeoVim
   	sudo flatpak remote-add -y --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
   	sudo flatpak install -y flathub io.neovim.nvim
-	sudo ln -s /var/lib/flatpak/app/io.neovim.nvim/current/active/export/bin/io.neovim.nvim /home/sellitus/.local/bin/nvim
+	sudo ln -s /var/lib/flatpak/app/io.neovim.nvim/current/active/export/bin/io.neovim.nvim /home/$username/.local/bin/nvim
 
  	# sudo add-apt-repository ppa:neovim-ppa/unstable -y
 	# sudo apt install -y neovim
@@ -154,27 +154,11 @@ if [[ $basicChoice == "y" ]]; then
 
   	# Install LunarVim
   	echo '\n\n\n' | LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
-   	echo 'export PATH=/home/sellitus/.local/bin:$PATH' >> ~/.bashrc
+   	echo 'export PATH=/home/$username/.local/bin:$PATH' >> ~/.bashrc
+	# Replace vim with lvim
+	echo "alias vim1=/usr/bin/vim" >> ~/.bashrc
+	echo "alias vim=lvim" >> ~/.bashrc
 
-	# Set tmux to run upon starting shell (along with recovery)
-
-# 	echo 'echo ""
-# 	if [[ -z "$TMUX" ]] && [ "$SSH_CONNECTION" != "" ]; then
-# 	  IFS= read -t 1 -n 1 -r -s -p "Press any key (except enter) for /bin/bash... " keyPress
-# 	  echo ""
-
-# 	  if [ -z "$keyPress" ]; then
-# 	    if command -v tmux>/dev/null; then
-#               tmux attach-session -t main || tmux new-session -s main
-# 	    fi
-# 	  else
-# 	    echo ""
-# 	    echo ""
-# 	  fi
-# 	fi
-# 	' >> ~/.bashrc
-	
-	
 	echo 'function tmux1 ()
 {
 	tmux attach-session -t main1 || tmux new-session -s main1
@@ -287,6 +271,15 @@ if [[ $guiChoice == "y" ]]; then
 	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 	rm -f packages.microsoft.gpg
 
+	# Update apt cache
+	sudo apt update
+
+	# Install all desktop apps individually in case one fails
+	for currPackage in $guiApps
+	do
+		sudo apt install -y $currPackage
+	done
+
 	# Install VSCode plugins
 	code --install-extension ms-python.python
 	code --install-extension njqdev.vscode-python-typehint
@@ -300,17 +293,17 @@ if [[ $guiChoice == "y" ]]; then
 	code --install-extension vscjava.vscode-gradle
 	code --install-extension golang.go
 	code --install-extension continue.continue
-	
-	# Update apt cache
-	sudo apt update
 
-	# Install all desktop apps individually in case one fails
-	for currPackage in $guiApps
-	do
-		sudo apt install -y $currPackage
-	done
-	
-	#sudo apt install -y $guiApps
+	# Initialize VS Code from CLI
+	code --list-extensions | xargs -L 1 echo code --install-extension
+
+	# Add new settings, and disable continue.continue plugin
+	rm -f $HOME/.config/Code/User/settings.json
+	echo '{
+    "workbench.editor.wrapTabs": true,
+    "workbench.editor.tabSizing": "shrink",
+    "continue.continue": false
+}' >> $HOME/.config/Code/User/settings.json
 fi
 
 
