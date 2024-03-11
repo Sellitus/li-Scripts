@@ -308,7 +308,8 @@ if [[ $guiChoice == "y" ]]; then
 	echo '{
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
-    "continue.continue": false
+    "continue.continue": false,
+	"files.autoSave": "afterDelay"
 }' > $HOME/.config/Code/User/settings.json
 fi
 

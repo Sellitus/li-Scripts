@@ -107,7 +107,8 @@ if [[ $basicChoice == "y" ]]; then
 	echo '{
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
-    "continue.continue": false
+    "continue.continue": false,
+	"files.autoSave": "afterDelay"
 }' > $HOME/Library/Application\ Support/Code/User/settings.json
 
 fi
