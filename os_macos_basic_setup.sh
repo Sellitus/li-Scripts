@@ -93,6 +93,11 @@ if [[ $basicChoice == "y" ]]; then
 	code --install-extension vscjava.vscode-gradle
 	code --install-extension golang.go
 	code --install-extension continue.continue
+	code --install-extension jiapeiyao.tab-group
+	code --install-extension ms-azuretools.vscode-docker
+	code --install-extension ms-vscode-remote.remote-wsl
+	code --install-extension ms-vscode-remote.vscode-remote-extensionpack
+
 
 	# Initialize VS Code from CLI
 	code --list-extensions | xargs -L 1 echo code --install-extension
@@ -103,7 +108,7 @@ if [[ $basicChoice == "y" ]]; then
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
     "continue.continue": false
-}' >> $HOME/Library/Application\ Support/Code/User/settings.json
+}' > $HOME/Library/Application\ Support/Code/User/settings.json
 
 fi
 

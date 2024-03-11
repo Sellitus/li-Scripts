@@ -293,6 +293,12 @@ if [[ $guiChoice == "y" ]]; then
 	code --install-extension vscjava.vscode-gradle
 	code --install-extension golang.go
 	code --install-extension continue.continue
+	code --install-extension jiapeiyao.tab-group
+	code --install-extension ms-azuretools.vscode-docker
+	code --install-extension ms-vscode-remote.remote-wsl
+	code --install-extension ms-vscode-remote.vscode-remote-extensionpack
+
+
 
 	# Initialize VS Code from CLI
 	code --list-extensions | xargs -L 1 echo code --install-extension
@@ -303,7 +309,7 @@ if [[ $guiChoice == "y" ]]; then
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
     "continue.continue": false
-}' >> $HOME/.config/Code/User/settings.json
+}' > $HOME/.config/Code/User/settings.json
 fi
 
 
@@ -327,7 +333,7 @@ if [[ $serverChoice == "y" ]]; then
 
 	# Private Key
 	sudo mkdir /home/$username/.ssh
-	sudo echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINgvknZoaJHPUrlpdDT4euo6JX8FEhCLau5mMmwGwDun sellitus@main1633365964" > /home/$username/.ssh/authorized_keys
+	sudo echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCz832cZc34QrZuVCVbV6N36LRKeyDkNTjr07f9b4cQRNueieJ+JPIOIGIAH3NUzCDaEQKDxduh4/PvEQwzIPfzh2c9q6+bFFvZ1fuYkviW+sXevXLPJkACMd83PxFuvQO7A9L1GG0qqLTBBAr/x1snzu4FRXxN7MwlmUyPSdgPlEWQEioe678biJDn/21R11npCnGpiPAXvBLeQIcUOJ6euxlP5cf9rXx390g5x7tqiWYmwU1rAjGCJPEC7kdHtFYX/MTzZHuqZfRjYTH2JnwrIQihck6b5zeqy3lVvmpPENMq1Ha9zdBOZdak0IaEcTh0BVMcYlQQLueiN4FwLJ2mXNASZVYJwhpwDa9rdBH2zts63ICeDxM7ejl4xvtKoLYsYRKG3NZOIawkTGOiX31dbgoutW9QQEWqx/kr5UcUKBoAji3rTZ7joGTj41DLLJSpkYy2B5CgYeBXcObyblunvcNKSYi80bZoAx1Q2URsNFUOht8E+Jkgq43sFnSQVxsXZfXKIR/nRPx1YdCLCaxN2QcCk21rJc5wJD0ElS+5zGer1vo8N4WGvJhBSE4oj1Z9YFOOrofRqblbqOuDykKr2sjdn/X3krLvrRvCMjkgv0P9/01nx1FNE7mWp8n4NLjiZyGooOdFiMwVa0oGqphpe6zoE5T9poFX2XQ/Z/QPWQ== sellitus@ss-MacBook-Pro-3.local" > /home/$username/.ssh/authorized_keys
 	sudo chmod 700 /home/$username/.ssh/
 	sudo chmod 600 /home/$username/.ssh/authorized_keys
 	sudo chown -R $username:$username /home/$username/.ssh/
