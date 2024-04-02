@@ -297,6 +297,7 @@ if [[ $guiChoice == "y" ]]; then
 	code --install-extension ms-azuretools.vscode-docker
 	code --install-extension ms-vscode-remote.remote-wsl
 	code --install-extension ms-vscode-remote.vscode-remote-extensionpack
+ 	code --install-extension esbenp.prettier-vscode
 
 
 
