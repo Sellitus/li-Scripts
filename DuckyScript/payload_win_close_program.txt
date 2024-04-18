@@ -1,0 +1,23 @@
+REM Process's .exe file you'd like to close
+DEFINE PROCESS_NAME Discord.exe
+
+DEFAULT_DELAY 600
+REM GUI
+REM STRINGLN Task Manager
+RUN taskmgr.exe
+
+REM Select search
+REPEAT 4 TAB
+
+REM Write the process name
+STRINGLN PROCESS_NAME
+REPEAT 4 TAB
+
+REM Open the menu and close it ending the task
+DELETE
+DELAY 500
+
+REM Close the task manager
+ALT F4
+
+REM Open a program based on the .exe name

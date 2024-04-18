@@ -1,0 +1,2 @@
+REM Close the program currently in focus
+ALT F4
