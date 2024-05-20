@@ -98,10 +98,12 @@ if [[ $wslFix == "y" ]]; then
 	    sudo apt-get update
 	    sudo apt-get install -y daemonize dbus-user-session fontconfig libsquashfuse0 squashfuse fuse snapd
 	    sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
-     	    wsl.exe --shutdown
+     	    exec sudo nsenter -t $(pidof systemd) -a su - $LOGNAME
+	    wsl.exe --shutdown
+    	else
+ 		echo "If you are seeing this message, WSL was not detected even though the fix was requested by the user."
+  		exit 1
 	fi
- 	echo "If you are seeing this message, WSL was not detected even though the fix was applied."
-  	exit 1
  fi
 
 
@@ -250,8 +252,8 @@ if [[ $basicChoice == "y" ]]; then
 	sudo apt purge -y transmission-*
 	sudo apt purge -y apache2
 	
-	# Install Anaconda
 	
+	apt --fix-broken install -y
 fi
 
 
