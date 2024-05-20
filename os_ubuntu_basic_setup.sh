@@ -45,7 +45,9 @@ if [[ $userInput == "" ]]; then
 	echo "    ($vmGuestAdditions)"
 	echo "6 - Hyper-V Guest Additions"
 	echo "    ($hyperVGuestAdditions)"
- 	echo "7 - Prevent Reboot"
+ 	echo "7 - Apply snapd fix for Windows Subsystem for Linux (reboots WSL)"
+	echo "    ($hyperVGuestAdditions)"
+ 	echo "8 - Prevent Reboot"
 	echo ""
 	read -p ":: " userInput
 fi
@@ -73,9 +75,34 @@ for i in "${ADDR[@]}"; do
 		hyperVGuestChoice="y"
 	fi
  	if [[ $i == "7" ]]; then
+		wslFix="y"
+	fi
+ 	if [[ $i == "8" ]]; then
 		preventRebootChoice="y"
 	fi
 done
+
+
+
+# Determine if running in Windows Subsystem for Linux
+wsl_detected=false
+if grep -q "microsoft-standard" /proc/version; then
+    wsl_detected=true
+elif grep -q "Microsoft" /proc/version; then
+    wsl_detected=true
+fi
+
+if [[ $wslFix == "y" ]]; then
+	# Do fixes for WSL, if detected
+	if [ "$wsl_detected" ]; then
+	    sudo apt-get update
+	    sudo apt-get install -y daemonize dbus-user-session fontconfig libsquashfuse0 squashfuse fuse snapd
+	    sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+     	    wsl.exe --shutdown
+	fi
+ 	echo "If you are seeing this message, WSL was not detected even though the fix was applied."
+  	exit 1
+ fi
 
 
 
@@ -265,13 +292,7 @@ if [[ $guiChoice == "y" ]]; then
 	# Install Pycharm Community Edition
 	sudo snap install pycharm-community --classic
 
-	# Install VSCode
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-	sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-	sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-	rm -f packages.microsoft.gpg
-
-	# Update apt cache
+ 	# Update apt cache
 	sudo apt update
 
 	# Install all desktop apps individually in case one fails
@@ -280,39 +301,47 @@ if [[ $guiChoice == "y" ]]; then
 		sudo apt install -y $currPackage
 	done
 
-	# Install VSCode plugins
-	code --install-extension ms-python.python
-	code --install-extension njqdev.vscode-python-typehint
-	code --install-extension ms-toolsai.jupyter
-	code --install-extension donjayamanne.python-extension-pack
-	code --install-extension huggingface.huggingface-vscode
-	code --install-extension visualstudioexptteam.vscodeintellicode
-	code --install-extension github.copilot
-	code --install-extension dp-faces.dpico-theme
-	code --install-extension vscjava.vscode-java-pack
-	code --install-extension vscjava.vscode-gradle
-	code --install-extension golang.go
-	code --install-extension continue.continue
-	code --install-extension jiapeiyao.tab-group
-	code --install-extension ms-azuretools.vscode-docker
-	code --install-extension ms-vscode-remote.remote-wsl
-	code --install-extension ms-vscode-remote.vscode-remote-extensionpack
- 	code --install-extension esbenp.prettier-vscode
-
-
-
-	# Initialize VS Code from CLI
-	code --list-extensions | xargs -L 1 echo code --install-extension
-
-	# Add new settings, and disable continue.continue plugin
-	rm -f $HOME/.config/Code/User/settings.json
-	echo '{
+ 	if [[ $wslFix != "y"  ]]; then
+		# Install VSCode
+		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+		sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+		sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+		rm -f packages.microsoft.gpg
+	
+		# Install VSCode plugins
+		code --install-extension ms-python.python
+		code --install-extension njqdev.vscode-python-typehint
+		code --install-extension ms-toolsai.jupyter
+		code --install-extension donjayamanne.python-extension-pack
+		code --install-extension huggingface.huggingface-vscode
+		code --install-extension visualstudioexptteam.vscodeintellicode
+		code --install-extension github.copilot
+		code --install-extension dp-faces.dpico-theme
+		code --install-extension vscjava.vscode-java-pack
+		code --install-extension vscjava.vscode-gradle
+		code --install-extension golang.go
+		code --install-extension continue.continue
+		code --install-extension jiapeiyao.tab-group
+		code --install-extension ms-azuretools.vscode-docker
+		code --install-extension ms-vscode-remote.remote-wsl
+		code --install-extension ms-vscode-remote.vscode-remote-extensionpack
+	 	code --install-extension esbenp.prettier-vscode
+	
+	
+	
+		# Initialize VS Code from CLI
+		code --list-extensions | xargs -L 1 echo code --install-extension
+	
+		# Add new settings, and disable continue.continue plugin
+		rm -f $HOME/.config/Code/User/settings.json
+		echo '{
     "workbench.editor.wrapTabs": true,
     "workbench.editor.tabSizing": "shrink",
     "continue.continue": false,
     "files.autoSave": "afterDelay",
     "editor.wordWrap": "on"
 }' > $HOME/.config/Code/User/settings.json
+	fi
 fi
 
 
