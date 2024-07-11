@@ -68,10 +68,14 @@ if [[ $basicChoice == "y" ]]; then
 	echo "alias pip=/opt/homebrew/bin/pip3.11" >> ~/.bashrc
 	echo "alias python3=/opt/homebrew/bin/python3.11" >> ~/.bashrc
 	echo "alias pip3=/opt/homebrew/bin/pip3.11" >> ~/.bashrc
+
+	# Install LunarVim Prereqs
+	brew install python node
+	echo '\n' | curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+	brew install ripgrep
 	
   	# Install NeoVim, then LunarVim
-  	LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
-	echo '\n\n\n' | LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
+  	LV_BRANCH='release-1.4/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.4/neovim-0.9/utils/installer/install.sh)
    	echo 'export PATH=~/.local/bin:$PATH' >> ~/.bashrc
 
 	# Replace vim with lvim
@@ -130,6 +134,13 @@ if [[ $basicChoice == "y" ]]; then
 	echo ""
 	echo ""
 	echo "------------------ Basic Updates and Config B ( 8 / 8 ) ---------------------"
+	echo ""
+	echo ""
+
+
+	echo ""
+	echo ""
+	echo "TO COMPLETE SETUP: Run LunarVim and then run ':Lazy sync' to get rid of LunarVim errors"
 	echo ""
 	echo ""
 
