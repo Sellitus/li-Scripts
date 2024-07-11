@@ -69,8 +69,9 @@ if [[ $basicChoice == "y" ]]; then
 	echo "alias python3=/opt/homebrew/bin/python3.11" >> ~/.bashrc
 	echo "alias pip3=/opt/homebrew/bin/pip3.11" >> ~/.bashrc
 	
-  	# Install LunarVim
+  	# Install NeoVim, then LunarVim
   	LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
+	echo '\n\n\n' | LV_BRANCH='release-1.3/neovim-0.9' bash <(curl -s https://raw.githubusercontent.com/LunarVim/LunarVim/release-1.3/neovim-0.9/utils/installer/install.sh)
    	echo 'export PATH=~/.local/bin:$PATH' >> ~/.bashrc
 
 	# Replace vim with lvim
