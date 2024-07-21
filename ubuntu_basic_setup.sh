@@ -10,7 +10,7 @@ fi
 # User editable options
 systemApps="vim tmux curl nano build-essential unzip ufw fail2ban git sysbench htop fish virtualenv virtualenvwrapper docker.io snapd flatpak wget gpg apt-transport-https"
 serverApps="openssh-server"
-guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola code"
+guiApps="qbittorrent sublime-text sublime-merge tilix firefox git-cola"
 x11Apps="xfce4 xfce4-goodies tightvncserver"
 vmGuestAdditions="open-vm-tools open-vm-tools-desktop"
 hyperVGuestAdditions="linux-virtual linux-cloud-tools-virtual linux-tools-virtual"
@@ -307,6 +307,8 @@ if [[ $guiChoice == "y" ]]; then
 		sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
 		sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
 		rm -f packages.microsoft.gpg
+		sudo apt update
+		sudo apt install -y code
 	
 		# Install VSCode plugins
 		code --install-extension ms-python.python
@@ -320,7 +322,7 @@ if [[ $guiChoice == "y" ]]; then
 		code --install-extension vscjava.vscode-java-pack
 		code --install-extension vscjava.vscode-gradle
 		code --install-extension golang.go
-		code --install-extension continue.continue
+		# (not using this) code --install-extension continue.continue
 		code --install-extension jiapeiyao.tab-group
 		code --install-extension ms-azuretools.vscode-docker
 		code --install-extension ms-vscode-remote.remote-wsl
