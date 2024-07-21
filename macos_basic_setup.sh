@@ -97,7 +97,7 @@ if [[ $basicChoice == "y" ]]; then
 	code --install-extension vscjava.vscode-java-pack
 	code --install-extension vscjava.vscode-gradle
 	code --install-extension golang.go
-	code --install-extension continue.continue
+	# code --install-extension continue.continue
 	code --install-extension jiapeiyao.tab-group
 	code --install-extension ms-azuretools.vscode-docker
 	code --install-extension ms-vscode-remote.remote-wsl
