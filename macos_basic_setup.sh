@@ -43,9 +43,17 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config A ( 1 / 8 ) ---------------------"
+	echo "------------------ Basic Updates and Config A ( 1 / 2 ) ---------------------"
 	echo ""
 	echo ""
+
+	# Make wifi connect to the strongest AP for wifi AP roaming
+	(sudo crontab -l; echo "@reboot sudo /System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport prefs joinMode=Strongest
+") | sudo crontab -
+
+	# Increase VRAM limit
+	(sudo crontab -l; echo "@reboot sudo sysctl iogpu.wired_limit_mb=90112") | sudo crontab -
+
 
 	# Install brew non-interactively
 	NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -133,7 +141,7 @@ if [[ $basicChoice == "y" ]]; then
 
 	echo ""
 	echo ""
-	echo "------------------ Basic Updates and Config B ( 8 / 8 ) ---------------------"
+	echo "------------------ Basic Updates and Config B ( 2 / 2 ) ---------------------"
 	echo ""
 	echo ""
 
