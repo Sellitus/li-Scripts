@@ -122,7 +122,7 @@ def collect_code_files(folder_path, extensions, excluded_dirs, gitignore_pattern
 def write_consolidated_file(code_files, output_file):
     with open(output_file, 'w', encoding='utf-8') as outfile:
         for file in code_files:
-            outfile.write(f'===== {file} =====\n')
+            outfile.write(f'\n\n\n\n===== {file} =====\n')
             try:
                 with open(file, 'r', encoding='utf-8', errors='ignore') as infile:
                     for idx, line in enumerate(infile, 1):
@@ -169,7 +169,7 @@ def main():
         print('No code files found in the specified directory.')
         sys.exit(1)
 
-    output_file = os.path.join(os.getcwd(), f'consolidated_code.{primary_language.lower()}.txt')
+    output_file = os.path.join(os.getcwd(), f'consolidated_code.{os.path.basename(folder_path)}.{primary_language.lower()}.txt')
     write_consolidated_file(code_files, output_file)
 
     print(f'Consolidated file created at: {output_file}')
