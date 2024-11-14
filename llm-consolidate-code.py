@@ -136,6 +136,12 @@ def get_excluded_dirs_with_gitignore(folder_path):
     gitignore_patterns = parse_gitignore(folder_path)
     return excluded_dirs, gitignore_patterns
 
+def count_tokens(text):
+    # Simple tokenization: split text on whitespace and punctuation
+    import re
+    tokens = re.findall(r'\w+|\S', text)
+    return len(tokens)
+
 def main():
     parser = argparse.ArgumentParser(description='Consolidate code files into a single text file with line numbers, excluding specified directories and gitignored files.')
     parser.add_argument('folder_path', type=str, help='Path to the project folder')
@@ -172,6 +178,13 @@ def main():
     output_file = os.path.join(os.getcwd(), f'consolidated_code.{os.path.basename(folder_path)}.{primary_language.lower()}.txt')
     write_consolidated_file(code_files, output_file)
 
+    # Count and output the number of tokens in the final file
+    with open(output_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    num_tokens = count_tokens(content)
+
+    print(f'The consolidated file contains {num_tokens} tokens.')
     print(f'Consolidated file created at: {output_file}')
 
 if __name__ == '__main__':
