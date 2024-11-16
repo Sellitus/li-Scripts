@@ -22,6 +22,28 @@ class CodeStats:
         self.blank_lines = 0
         self.file_count = 0
         self.total_size = 0
+        
+        self.language_extensions = {
+            'Python': ['.py'],
+            'JavaScript': ['.js', '.jsx'],
+            'Java': ['.java'],
+            'C++': ['.cpp', '.hpp', '.h', '.cc', '.cxx'],
+            'C#': ['.cs'],
+            'Ruby': ['.rb'],
+            'Go': ['.go'],
+            'PHP': ['.php'],
+            'TypeScript': ['.ts', '.tsx'],
+            'Swift': ['.swift'],
+            'Kotlin': ['.kt', '.kts'],
+            'Rust': ['.rs'],
+            'HTML': ['.html', '.htm'],
+            'CSS': ['.css'],
+            'Shell': ['.sh', '.bash'],
+            'Scala': ['.scala'],
+            'Perl': ['.pl', '.pm'],
+            'Dart': ['.dart'],
+            'Lua': ['.lua']
+        }
 
     def update(self, lines: List[str], file_size: int):
         self.file_count += 1
@@ -89,6 +111,7 @@ def get_excluded_directories(folder_path: str) -> Set[str]:
     common_excludes = {
         'venv', 'env', '.env',
         '__pycache__', 'node_modules', 'build',
+        'builds',
         'dist', '.git', '.svn', '.hg',
         'temp', 'tmp', 'out', 'target'
     }
@@ -171,6 +194,27 @@ def process_file(args: Tuple[str, List[str], bool]) -> Tuple[str, str, int, List
 
 def collect_and_process_files(folder_path: str, extensions: List[str], excluded_dirs: Set[str], 
                             gitignore_patterns: List[str], prettify: bool) -> Tuple[List[Tuple[str, str]], CodeStats]:
+    language_extensions = {
+        'Python': ['.py'],
+        'JavaScript': ['.js', '.jsx'],
+        'Java': ['.java'],
+        'C++': ['.cpp', '.hpp', '.h', '.cc', '.cxx'],
+        'C#': ['.cs'],
+        'Ruby': ['.rb'],
+        'Go': ['.go'],
+        'PHP': ['.php'],
+        'TypeScript': ['.ts', '.tsx'],
+        'Swift': ['.swift'],
+        'Kotlin': ['.kt', '.kts'],
+        'Rust': ['.rs'],
+        'HTML': ['.html', '.htm'],
+        'CSS': ['.css'],
+        'Shell': ['.sh', '.bash'],
+        'Scala': ['.scala'],
+        'Perl': ['.pl', '.pm'],
+        'Dart': ['.dart'],
+        'Lua': ['.lua']
+    }
     code_files = []
     stats = CodeStats()
     
@@ -180,6 +224,18 @@ def collect_and_process_files(folder_path: str, extensions: List[str], excluded_
             filepath = os.path.join(root, file)
             if not is_ignored(filepath, gitignore_patterns, folder_path):
                 code_files.append(filepath)
+                
+    # Count the number of each language code file by the extension of the file
+    language_counts = defaultdict(int)
+    for file in code_files:
+        _, ext = os.path.splitext(file)
+        for language, exts in language_extensions.items():
+            if ext.lower() in exts:
+                language_counts[language] += 1
+
+    print("\nLanguage file counts:")
+    for language, count in language_counts.items():
+        print(f"{language}: {count} files")
 
     processed_files = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -294,11 +350,15 @@ def main():
          gzip.open(output_file, 'rt', encoding='utf-8') as f:
         content = f.read()
         num_tokens = count_tokens(content)
+        file_size = os.path.getsize(output_file)
+        file_size_str = humanize.naturalsize(file_size, binary=True)
 
+    print(stats)
+    
     print(f'\nOutput Statistics:')
     print(f'Token Count: {num_tokens:,}')
-    print(f'Output File: {output_file}')
-    print(stats)
+    print(f'File Size: {file_size_str}')
+    print(f'Output File: {output_file}\n')
 
 if __name__ == '__main__':
     main()
