@@ -296,7 +296,12 @@ def main():
     if not os.path.isdir(args.folder_path):
         print(f'Error: {args.folder_path} is not a valid directory.')
         sys.exit(1)
-
+        
+    if args.folder_path == '.':
+        args.folder_path = os.getcwd()
+    else:
+        args.folder_path = os.path.abspath(args.folder_path)
+        
     # Detect languages and show statistics
     detected_languages = detect_languages(args.folder_path)
     print("\nDetected languages:")
