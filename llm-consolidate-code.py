@@ -11,8 +11,13 @@ from pygments import formatters, lexers
 import markdown
 import gzip
 import re
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Callable, Union
 import humanize
+try:
+    import tiktoken
+    TIKTOKEN_AVAILABLE = True
+except ImportError:
+    TIKTOKEN_AVAILABLE = False
 
 class CodeStats:
     def __init__(self):
@@ -249,8 +254,98 @@ def collect_and_process_files(folder_path: str, extensions: List[str], excluded_
 
     return processed_files, stats
 
+def process_mini_output(lines: List[str]) -> str:
+    """Process file content to only include function definitions and preserve line numbers."""
+    result = []
+    in_py_function = False
+    in_bracket_function = False
+    py_function_indent = -1
+    bracket_depth = 0
+    
+    # Common function definition patterns for different languages
+    py_fn_pattern = r'^\s*def\s+\w+\s*\('  # Python
+    bracket_fn_patterns = [
+        r'^\s*function\s+\w+\s*\(',  # JavaScript
+        r'^\s*\w+\s+\w+\s*\([^)]*\)\s*{',  # C/C++/Java/C#
+        r'^\s*public|private|protected\s+\w+\s+\w+\s*\(',  # Java/C# methods
+    ]
+    
+    # Check if a line is a Python function definition
+    def is_py_function_def(line: str) -> bool:
+        return bool(re.search(py_fn_pattern, line))
+    
+    # Check if a line is a bracket-based function definition
+    def is_bracket_function_def(line: str) -> bool:
+        return any(re.search(pattern, line) for pattern in bracket_fn_patterns)
+    
+    # Determine indentation level of a line
+    def get_indent_level(line: str) -> int:
+        return len(line) - len(line.lstrip())
+    
+    for idx, line in enumerate(lines, 1):
+        strip_line = line.strip()
+        
+        # Always include empty lines with their line numbers
+        if not strip_line:
+            result.append(f"{idx:4}: {line}")
+            continue
+        
+        # Track brackets for languages using them
+        open_brackets = line.count('{')
+        close_brackets = line.count('}')
+        
+        # Python function detection and handling
+        if ':' in line and is_py_function_def(line):
+            # Start of a Python function
+            in_py_function = True
+            py_function_indent = get_indent_level(line)
+            result.append(f"{idx:4}: {line}")
+            continue
+        
+        # Handle Python function body based on indentation
+        if in_py_function:
+            curr_indent = get_indent_level(line)
+            
+            # Check if we're exiting the function (less or equal indentation than function def)
+            # Skip empty lines and comments when checking indentation
+            if strip_line and curr_indent <= py_function_indent and not strip_line.startswith('#'):
+                in_py_function = False
+                result.append(f"{idx:4}: {line}")
+                continue
+            
+            # We're in the function body - output empty line to maintain line numbers
+            result.append(f"{idx:4}: ")
+            continue
+        
+        # Handle bracket-based languages function detection
+        if not in_bracket_function and is_bracket_function_def(line) and '{' in line:
+            in_bracket_function = True
+            bracket_depth = open_brackets - close_brackets
+            result.append(f"{idx:4}: {line}")
+            continue
+        
+        # Handle bracket-based function body
+        if in_bracket_function:
+            # Update bracket depth
+            bracket_depth += open_brackets - close_brackets
+            
+            # If we've closed all brackets, we've exited the function
+            if bracket_depth <= 0:
+                in_bracket_function = False
+                result.append(f"{idx:4}: {line}")
+                continue
+            
+            # We're in the function body - output empty line
+            result.append(f"{idx:4}: ")
+            continue
+        
+        # Include all non-function lines normally
+        result.append(f"{idx:4}: {line}")
+    
+    return '\n'.join(result)
+
 def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats, 
-                output_file: str, markdown_output: bool, compress: bool):
+                output_file: str, markdown_output: bool, compress: bool, mini: bool = False):
     content = f"# Code Analysis Report\n\n{str(stats)}\n\n" if markdown_output else str(stats)
     
     for filepath, file_content in processed_files:
@@ -261,7 +356,12 @@ def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats,
             content += "```\n"
         
         lines = file_content.splitlines()
-        content += '\n'.join(f"{idx:4}: {line}" for idx, line in enumerate(lines, 1))
+        
+        if mini:
+            # Process lines to keep only function definitions and preserve line numbers
+            content += process_mini_output(lines)
+        else:
+            content += '\n'.join(f"{idx:4}: {line}" for idx, line in enumerate(lines, 1))
         
         if markdown_output:
             content += "\n```"
@@ -276,8 +376,90 @@ def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats,
             
     return output_file
 
-def count_tokens(text: str) -> int:
+def count_tokens_simple(text: str) -> int:
+    """Count tokens using a basic approach (words and non-whitespace symbols)."""
     return len(re.findall(r'\w+|\S', text))
+
+def count_tokens_improved(text: str) -> int:
+    """
+    Count tokens using a heuristic approximation of how LLMs tokenize text.
+    This implementation provides a better estimate than simple word splitting.
+    """
+    # Handle common punctuation and special characters as separate tokens
+    text = re.sub(r'([.,!?;:()[\]{}"\'])', r' \1 ', text)
+    
+    # Handle contractions specially
+    text = re.sub(r"([a-zA-Z])'([a-zA-Z])", r"\1 ' \2", text)
+    
+    # Split on whitespace to get raw tokens
+    raw_tokens = text.split()
+    
+    total_tokens = 0
+    for token in raw_tokens:
+        # Count numbers as single tokens
+        if re.match(r'^\d+$', token):
+            total_tokens += 1
+            continue
+            
+        # Count individual punctuation as single tokens
+        if re.match(r'^[.,!?;:()[\]{}"\']$', token):
+            total_tokens += 1
+            continue
+            
+        # Handle tokens with mixed alphanumerics
+        if re.search(r'[a-zA-Z0-9]', token):
+            # Count uppercase runs as potential separate tokens (e.g., "GPT" -> "G", "P", "T")
+            uppercase_runs = len(re.findall(r'[A-Z]{2,}', token))
+            if uppercase_runs > 0:
+                # Adjust for uppercase runs
+                total_tokens += len(token) // 2 + 1
+            else:
+                # For regular words, estimate based on length (an approximation)
+                if len(token) <= 4:
+                    total_tokens += 1
+                else:
+                    # Longer words might be split into subwords by tokenizers
+                    total_tokens += max(1, len(token) // 4 + 1)
+        else:
+            # Handle other symbols
+            total_tokens += len(token)
+    
+    return total_tokens
+
+def count_tokens_tiktoken(text: str, model: str = "gpt-4.5") -> int:
+    """
+    Count tokens using the OpenAI tiktoken library, which provides
+    the most accurate token counting for GPT models.
+    """
+    if not TIKTOKEN_AVAILABLE:
+        print("Warning: tiktoken not installed. Using improved tokenization method instead.")
+        return count_tokens_improved(text)
+    
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+        return len(encoding.encode(text))
+    except Exception as e:
+        print(f"Error using tiktoken: {e}. Falling back to improved tokenization method.")
+        return count_tokens_improved(text)
+
+def count_tokens(text: str, method: str = "improved", model: str = "gpt-4.5") -> int:
+    """
+    Count tokens using the specified method.
+    
+    Args:
+        text: The text to tokenize
+        method: One of "simple", "improved", or "tiktoken"
+        model: The model to use for tiktoken (default: "gpt-4.5")
+    
+    Returns:
+        The number of tokens
+    """
+    if method == "simple":
+        return count_tokens_simple(text)
+    elif method == "tiktoken":
+        return count_tokens_tiktoken(text, model)
+    else:  # Default to improved
+        return count_tokens_improved(text)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -291,6 +473,15 @@ def main():
                        help='Output in Markdown format')
     parser.add_argument('--compress', action='store_true', 
                        help='Compress output file using gzip')
+    parser.add_argument('--mini', action='store_true',
+                       help='Only include function definitions, not implementations, while preserving line numbers')
+    parser.add_argument('--tokenizer', type=str, 
+                       choices=['simple', 'improved', 'tiktoken'], default='tiktoken',
+                       help='Tokenization method to use for token counting: simple (basic word count), '
+                            'improved (heuristic approximation), or tiktoken (exact GPT tokenization, requires package) '
+                            '(default: tiktoken)')
+    parser.add_argument('--model', type=str, default='gpt-4.5',
+                       help='Model to use for tiktoken tokenization when --tokenizer=tiktoken (default: gpt-4.5)')
     args = parser.parse_args()
 
     if not os.path.isdir(args.folder_path):
@@ -347,23 +538,46 @@ def main():
     # Write output with chosen format and compression
     output_file = write_output(
         processed_files, stats, output_file,
-        args.markdown, args.compress
+        args.markdown, args.compress, args.mini
     )
 
     # Count tokens in final output
     with open(output_file, 'r', encoding='utf-8') if not args.compress else \
          gzip.open(output_file, 'rt', encoding='utf-8') as f:
         content = f.read()
-        num_tokens = count_tokens(content)
+        
+        # Use selected tokenization method
+        num_tokens = count_tokens(content, method=args.tokenizer, model=args.model)
+        
+        # Get counts using other methods if tiktoken is available
+        if args.tokenizer == 'tiktoken' and TIKTOKEN_AVAILABLE:
+            simple_count = count_tokens_simple(content)
+            improved_count = count_tokens_improved(content)
+            tiktoken_count = num_tokens
+            
+            # Calculate differences between methods
+            simple_diff = ((simple_count - tiktoken_count) / tiktoken_count) * 100
+            improved_diff = ((improved_count - tiktoken_count) / tiktoken_count) * 100
+        
         file_size = os.path.getsize(output_file)
         file_size_str = humanize.naturalsize(file_size, binary=True)
 
     print(stats)
     
     print(f'\nOutput Statistics:')
-    print(f'Token Count: {num_tokens:,}')
+    tokenizer_method = f" ({args.tokenizer}{' tokenizer' if args.tokenizer != 'tiktoken' else f', using {args.model} model'})"
+    print(f'Token Count: {num_tokens:,}{tokenizer_method}')
+    
+    # Show comparison of different tokenization methods if tiktoken is available
+    if args.tokenizer == 'tiktoken' and TIKTOKEN_AVAILABLE:
+        print(f'  Simple tokenizer: {simple_count:,} tokens ({simple_diff:+.1f}%)')
+        print(f'  Improved tokenizer: {improved_count:,} tokens ({improved_diff:+.1f}%)')
+    
     print(f'File Size: {file_size_str}')
     print(f'Output File: {output_file}\n')
+    
+    if args.tokenizer == 'tiktoken' and not TIKTOKEN_AVAILABLE:
+        print("Note: For more accurate token counting, install tiktoken: pip install tiktoken")
 
 if __name__ == '__main__':
     main()
