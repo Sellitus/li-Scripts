@@ -255,7 +255,10 @@ def collect_and_process_files(folder_path: str, extensions: List[str], excluded_
     return processed_files, stats
 
 def process_mini_output(lines: List[str]) -> str:
-    """Process file content to only include function definitions and preserve line numbers."""
+    """
+    Process file content to only include function definitions and preserve line numbers.
+    This is compression level 1.
+    """
     result = []
     in_py_function = False
     in_bracket_function = False
@@ -344,35 +347,97 @@ def process_mini_output(lines: List[str]) -> str:
     
     return '\n'.join(result)
 
+def process_extreme_compression(lines: List[str]) -> str:
+    """
+    Process file content to minimize token count as much as possible.
+    This is compression level 2.
+    
+    Techniques applied:
+    1. Remove all comments
+    2. Remove blank lines
+    3. Remove indentation
+    4. Remove line numbers
+    5. Preserve only essential code elements
+    """
+    result = []
+    
+    # Common comment patterns
+    comment_patterns = [
+        r'#.*$',                # Python, Shell
+        r'//.*$',               # C, C++, JavaScript, Java
+        r'/\*.*?\*/',           # C, C++, JavaScript, Java multiline (non-greedy)
+        r'<!--.*?-->',          # HTML/XML
+    ]
+    
+    for line in lines:
+        # Skip blank lines
+        if not line.strip():
+            continue
+            
+        # Remove comments
+        clean_line = line
+        for pattern in comment_patterns:
+            clean_line = re.sub(pattern, '', clean_line)
+            
+        # Skip lines that become empty after comment removal
+        if not clean_line.strip():
+            continue
+            
+        # Remove excessive whitespace but preserve some structure
+        clean_line = clean_line.strip()
+        
+        # Add the cleaned line if it's not empty
+        if clean_line:
+            result.append(clean_line)
+    
+    # Join with minimal separators to further reduce tokens
+    return ' '.join(result)
+
 def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats, 
-                output_file: str, markdown_output: bool, compress: bool, mini: bool = False):
+                output_file: str, markdown_output: bool, compression_level: int = 0):
+    """
+    Write the output file with the specified compression level:
+    0 = no compression (default)
+    1 = function definitions only (mini mode)
+    2 = extreme compression (minimize token count)
+    """
     content = f"# Code Analysis Report\n\n{str(stats)}\n\n" if markdown_output else str(stats)
     
+    # Extreme compression (level 2) gets a much more condensed header format
+    file_separator = "\n\n" if compression_level == 2 else "\n\n===== "
+    
     for filepath, file_content in processed_files:
-        separator = "\n\n## " if markdown_output else "\n\n===== "
-        content += f"{separator}{filepath} =====\n\n"
+        # Choose appropriate separator based on compression level and format
+        if compression_level == 2:
+            separator = "\n## " if markdown_output else "\nFILE: "
+        else:
+            separator = "\n\n## " if markdown_output else "\n\n===== "
+            
+        content += f"{separator}{filepath} "
+        content += "=" * (0 if compression_level == 2 else 5)  # No extra equals signs in extreme compression
+        content += "\n\n" if compression_level != 2 else "\n"  # Less whitespace in extreme compression
         
-        if markdown_output:
+        if markdown_output and compression_level != 2:
             content += "```\n"
         
         lines = file_content.splitlines()
         
-        if mini:
-            # Process lines to keep only function definitions and preserve line numbers
+        if compression_level == 1:
+            # Function definitions only (mini mode)
             content += process_mini_output(lines)
+        elif compression_level == 2:
+            # Extreme compression to minimize tokens
+            content += process_extreme_compression(lines)
         else:
+            # No compression - full output with line numbers
             content += '\n'.join(f"{idx:4}: {line}" for idx, line in enumerate(lines, 1))
         
-        if markdown_output:
+        if markdown_output and compression_level != 2:
             content += "\n```"
     
-    if compress:
-        output_file += '.gz'
-        with gzip.open(output_file, 'wt', encoding='utf-8') as f:
-            f.write(content)
-    else:
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(content)
+    # Write the file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(content)
             
     return output_file
 
@@ -462,19 +527,22 @@ def count_tokens(text: str, method: str = "improved", model: str = "gpt-4.5") ->
         return count_tokens_improved(text)
 
 def main():
+    # Create a completely new argument parser to avoid any conflicts with old parameters
     parser = argparse.ArgumentParser(
-        description='Consolidate code files into a single text file with advanced features.')
-    parser.add_argument('folder_path', type=str, help='Path to the project folder')
+        description='Consolidate code files into a single text file with advanced features.',
+        conflict_handler='resolve')  # This will overwrite any conflicting arguments
+        
+    # Define all arguments from scratch
+    parser.add_argument('folder_path', type=str, 
+                       help='Path to the project folder')
     parser.add_argument('--languages', type=str, nargs='+', 
                        help='Specific languages to include (default: auto-detect)')
     parser.add_argument('--prettify', action='store_true', 
                        help='Enable syntax highlighting in output')
     parser.add_argument('--markdown', action='store_true', 
                        help='Output in Markdown format')
-    parser.add_argument('--compress', action='store_true', 
-                       help='Compress output file using gzip')
-    parser.add_argument('--mini', action='store_true',
-                       help='Only include function definitions, not implementations, while preserving line numbers')
+    parser.add_argument('--compress', type=int, default=0, choices=[0, 1, 2],
+                       help='Compression level: 0=none, 1=function definitions only (shows only function signatures), 2=extreme compression (minimizes token count)')
     parser.add_argument('--tokenizer', type=str, 
                        choices=['simple', 'improved', 'tiktoken'], default='tiktoken',
                        help='Tokenization method to use for token counting: simple (basic word count), '
@@ -535,15 +603,14 @@ def main():
     else:
         output_file += '.txt'
 
-    # Write output with chosen format and compression
+    # Write output with chosen format and compression level
     output_file = write_output(
         processed_files, stats, output_file,
-        args.markdown, args.compress, args.mini
+        args.markdown, args.compress
     )
 
     # Count tokens in final output
-    with open(output_file, 'r', encoding='utf-8') if not args.compress else \
-         gzip.open(output_file, 'rt', encoding='utf-8') as f:
+    with open(output_file, 'r', encoding='utf-8') as f:
         content = f.read()
         
         # Use selected tokenization method
