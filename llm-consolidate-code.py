@@ -11,7 +11,7 @@ from pygments import formatters, lexers
 import markdown
 import gzip
 import re
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Set, Tuple, Any
 import humanize
 
 class CodeStats:
@@ -249,23 +249,355 @@ def collect_and_process_files(folder_path: str, extensions: List[str], excluded_
 
     return processed_files, stats
 
+def detect_function_and_class_patterns(filepath: str) -> Dict[str, Any]:
+    """Return regex patterns to identify function and class declarations based on file extension."""
+    _, ext = os.path.splitext(filepath.lower())
+    
+    # Dictionary of language patterns for function/method and class declarations
+    patterns = {
+        # Python
+        '.py': {
+            'func_start': re.compile(r'^\s*(def|async\s+def)\s+\w+'),
+            'class_start': re.compile(r'^\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': True
+        },
+        # JavaScript/TypeScript
+        '.js': {
+            'func_start': re.compile(r'^\s*(function\s+\w+|const\s+\w+\s*=\s*(?:async\s*)?\(|^\s*\w+\s*[=:]\s*(?:async\s*)?\(|\w+\s*\([^)]*\)\s*{)'),
+            'class_start': re.compile(r'^\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.jsx': {
+            'func_start': re.compile(r'^\s*(function\s+\w+|const\s+\w+\s*=\s*(?:async\s*)?\(|^\s*\w+\s*[=:]\s*(?:async\s*)?\(|\w+\s*\([^)]*\)\s*{)'),
+            'class_start': re.compile(r'^\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.ts': {
+            'func_start': re.compile(r'^\s*(function\s+\w+|const\s+\w+\s*=\s*(?:async\s*)?\(|^\s*\w+\s*[=:]\s*(?:async\s*)?\(|\w+\s*\([^)]*\)\s*{)'),
+            'class_start': re.compile(r'^\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.tsx': {
+            'func_start': re.compile(r'^\s*(function\s+\w+|const\s+\w+\s*=\s*(?:async\s*)?\(|^\s*\w+\s*[=:]\s*(?:async\s*)?\(|\w+\s*\([^)]*\)\s*{)'),
+            'class_start': re.compile(r'^\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Java
+        '.java': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|final|abstract|synchronized)?\s*(?:(?:void|int|float|double|boolean|String|char|byte|long|short)\s+)?\w+\s*\([^)]*\)\s*(?:throws\s+\w+(?:\s*,\s*\w+)*)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:public|private|protected)?\s*(?:static|final|abstract)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # C++
+        '.cpp': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|virtual|inline|explicit|friend|constexpr)?\s*(?:void|int|float|double|bool|char|auto|unsigned|signed|long|short|const)?\s*\w+:?:?\w*\s*\([^{;]*\)\s*(?:const|noexcept|override|final)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:class|struct|enum)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.hpp': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|virtual|inline|explicit|friend|constexpr)?\s*(?:void|int|float|double|bool|char|auto|unsigned|signed|long|short|const)?\s*\w+:?:?\w*\s*\([^{;]*\)\s*(?:const|noexcept|override|final)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:class|struct|enum)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.h': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|virtual|inline|explicit|friend|constexpr)?\s*(?:void|int|float|double|bool|char|auto|unsigned|signed|long|short|const)?\s*\w+:?:?\w*\s*\([^{;]*\)\s*(?:const|noexcept|override|final)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:class|struct|enum)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.cc': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|virtual|inline|explicit|friend|constexpr)?\s*(?:void|int|float|double|bool|char|auto|unsigned|signed|long|short|const)?\s*\w+:?:?\w*\s*\([^{;]*\)\s*(?:const|noexcept|override|final)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:class|struct|enum)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.cxx': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|virtual|inline|explicit|friend|constexpr)?\s*(?:void|int|float|double|bool|char|auto|unsigned|signed|long|short|const)?\s*\w+:?:?\w*\s*\([^{;]*\)\s*(?:const|noexcept|override|final)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:class|struct|enum)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # C#
+        '.cs': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|internal|static|virtual|abstract|override|async)?\s*(?:void|int|float|double|bool|char|string|var|object|Task)?\s*\w+\s*\([^)]*\)\s*(?:where\s+\w+\s*:\s*\w+(?:\s*,\s*\w+)*)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:public|private|protected|internal)?\s*(?:static|sealed|abstract|partial)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Ruby
+        '.rb': {
+            'func_start': re.compile(r'^\s*def\s+\w+'),
+            'class_start': re.compile(r'^\s*(?:class|module)\s+\w+'),
+            'block_start': 'do',
+            'block_end': 'end',
+            'indent_based': True
+        },
+        # Go
+        '.go': {
+            'func_start': re.compile(r'^\s*func\s+\w+\s*\([^)]*\)\s*(?:\([^)]*\)\s*)?{'),
+            'class_start': re.compile(r'^\s*type\s+\w+\s+struct'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # PHP
+        '.php': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|static|final|abstract)?\s*function\s+\w+\s*\([^)]*\)\s*(?::\s*\?\w+|\w+)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:abstract|final)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Swift
+        '.swift': {
+            'func_start': re.compile(r'^\s*(?:public|private|internal|open|fileprivate)?\s*func\s+\w+\s*\([^)]*\)(?:\s*->\s*\w+)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:public|private|internal|open|fileprivate)?\s*(?:final)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Kotlin
+        '.kt': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|internal|override|open|fun)\s+\w+\s*\([^)]*\)(?:\s*:\s*\w+)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:public|private|protected|internal|data|sealed|open|abstract)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.kts': {
+            'func_start': re.compile(r'^\s*(?:public|private|protected|internal|override|open|fun)\s+\w+\s*\([^)]*\)(?:\s*:\s*\w+)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:public|private|protected|internal|data|sealed|open|abstract)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Rust
+        '.rs': {
+            'func_start': re.compile(r'^\s*(?:pub)?\s*fn\s+\w+\s*(?:<[^>]*>)?\s*\([^)]*\)(?:\s*->\s*\w+)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:pub)?\s*(?:struct|enum|trait|impl)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Scala
+        '.scala': {
+            'func_start': re.compile(r'^\s*def\s+\w+'),
+            'class_start': re.compile(r'^\s*(?:class|object|trait|abstract\s+class)\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Dart
+        '.dart': {
+            'func_start': re.compile(r'^\s*(?:void|int|double|bool|String|var|dynamic)?\s*\w+\s*\([^)]*\)\s*(?:async|sync\*)?\s*{'),
+            'class_start': re.compile(r'^\s*(?:abstract)?\s*class\s+\w+'),
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        # Lua
+        '.lua': {
+            'func_start': re.compile(r'^\s*(?:local\s+)?function\s+\w+\s*\([^)]*\)'),
+            'class_start': re.compile(r'^\s*(?:local\s+)?\w+\s*=\s*{}\s*--\s*[Cc]lass'),  # Lua doesn't have formal classes
+            'block_start': 'function',
+            'block_end': 'end',
+            'indent_based': False
+        },
+        # Shell
+        '.sh': {
+            'func_start': re.compile(r'^\s*(\w+\s*\(\s*\))|\s*function\s+\w+\s*\('),
+            'class_start': None,  # Shell scripts don't have classes
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        },
+        '.bash': {
+            'func_start': re.compile(r'^\s*(\w+\s*\(\s*\))|\s*function\s+\w+\s*\('),
+            'class_start': None,  # Shell scripts don't have classes
+            'block_start': '{',
+            'block_end': '}',
+            'indent_based': False
+        }
+    }
+    
+    # Return pattern for the file extension, or a default pattern if not found
+    default_pattern = {
+        'func_start': re.compile(r'^\s*(function|def|void|int|float|double|boolean|string)\s+\w+'),
+        'class_start': re.compile(r'^\s*class\s+\w+'),
+        'block_start': '{',
+        'block_end': '}',
+        'indent_based': False
+    }
+    
+    return patterns.get(ext, default_pattern)
+
+def compress_code(filepath: str, lines: List[str]) -> List[str]:
+    """Compress code by removing function and method bodies but preserving class definitions."""
+    _, ext = os.path.splitext(filepath.lower())
+    
+    # Get language-specific patterns
+    patterns = detect_function_and_class_patterns(filepath)
+    
+    compressed_lines = []
+    inside_function = False
+    inside_class = False
+    inside_class_method = False
+    function_indent = 0
+    class_indent = 0
+    brace_count = 0
+    class_brace_count = 0
+    
+    # Handle different language types
+    if patterns['indent_based']:
+        # For indent-based languages like Python, Ruby
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            current_indent = len(line) - len(line.lstrip())
+            
+            # Check for class definition
+            if patterns['class_start'] and patterns['class_start'].match(line):
+                inside_class = True
+                class_indent = current_indent
+                compressed_lines.append(line)
+                continue
+                
+            # Detect function/method start
+            if patterns['func_start'].match(line):
+                # Check if this is a class method
+                if inside_class and current_indent > class_indent:
+                    inside_class_method = True
+                    inside_function = True
+                else:
+                    # This is a standalone function
+                    inside_function = True
+                    inside_class_method = False
+                    
+                function_indent = current_indent
+                compressed_lines.append(line)
+            elif inside_function:
+                # Check if we're exiting the function based on indentation
+                if (not stripped or current_indent <= function_indent) and i < len(lines) - 1:
+                    next_line = lines[i + 1]
+                    next_indent = len(next_line) - len(next_line.lstrip())
+                    
+                    if next_indent <= function_indent:
+                        inside_function = False
+                        inside_class_method = False
+                        indent = ' ' * function_indent
+                        compressed_lines.append(f"{indent}    # Function body removed for compression")
+                        compressed_lines.append(line)  # Include the blank line
+                elif not inside_function:
+                    compressed_lines.append(line)
+            else:
+                compressed_lines.append(line)
+                
+            # Check if we're exiting the class based on indentation
+            if inside_class and not stripped and i < len(lines) - 1:
+                next_line = lines[i + 1]
+                next_indent = len(next_line) - len(next_line.lstrip())
+                if next_indent <= class_indent:
+                    inside_class = False
+    else:
+        # For brace-based languages (C-family, Java, JavaScript, etc.)
+        in_class_definition = False
+        class_definition_brace_level = 0
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            current_indent = len(line) - len(line.lstrip())
+            
+            # Count braces to track block nesting
+            if '{' in stripped:
+                brace_count += stripped.count('{')
+            if '}' in stripped:
+                brace_count -= stripped.count('}')
+                
+            # Check for class definition
+            if patterns['class_start'] and patterns['class_start'].match(line):
+                in_class_definition = True
+                class_definition_brace_level = brace_count
+                compressed_lines.append(line)
+                continue
+                
+            # If we're inside a class definition but not a method, include everything
+            if in_class_definition and not inside_function:
+                compressed_lines.append(line)
+                
+                # Check if we've exited the class definition
+                if brace_count < class_definition_brace_level and '}' in stripped:
+                    in_class_definition = False
+                
+                # Detect class method start
+                if patterns['func_start'].match(line):
+                    inside_function = True
+                    function_indent = current_indent
+                continue
+                
+            # Detect function/method start
+            if patterns['func_start'].match(line):
+                inside_function = True
+                function_indent = current_indent
+                compressed_lines.append(line)
+                
+                # For one-line functions like in JavaScript
+                if '{' in line and '}' in line and stripped.endswith('}'):
+                    inside_function = False
+            elif inside_function:
+                # Check if we're at the end of the function block
+                if brace_count == 0 and '}' in stripped:
+                    inside_function = False
+                    indent = ' ' * function_indent
+                    if len(compressed_lines) > 0 and "# Function body removed for compression" not in compressed_lines[-1]:
+                        compressed_lines.append(f"{indent}    // Function body removed for compression")
+                    compressed_lines.append(line)  # Include the closing brace
+                elif not inside_function:
+                    compressed_lines.append(line)
+            else:
+                compressed_lines.append(line)
+    
+    return compressed_lines
+
 def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats, 
                 output_file: str, markdown_output: bool, compress: bool):
     content = f"# Code Analysis Report\n\n{str(stats)}\n\n" if markdown_output else str(stats)
-    
+
     for filepath, file_content in processed_files:
         separator = "\n\n## " if markdown_output else "\n\n===== "
         content += f"{separator}{filepath} =====\n\n"
-        
+
         if markdown_output:
             content += "```\n"
-        
+
         lines = file_content.splitlines()
+        if compress:
+            # Compress code by removing function bodies
+            lines = compress_code(filepath, lines)
+
         content += '\n'.join(f"{idx:4}: {line}" for idx, line in enumerate(lines, 1))
-        
+
         if markdown_output:
             content += "\n```"
-    
+
     if compress:
         output_file += '.gz'
         with gzip.open(output_file, 'wt', encoding='utf-8') as f:
@@ -273,7 +605,7 @@ def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats,
     else:
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(content)
-            
+
     return output_file
 
 def count_tokens(text: str) -> int:
