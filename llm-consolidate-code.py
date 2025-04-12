@@ -11,13 +11,8 @@ from pygments import formatters, lexers
 import markdown
 import gzip
 import re
-from typing import List, Dict, Set, Tuple, Callable, Union, Any
+from typing import List, Dict, Set, Tuple, Any
 import humanize
-try:
-    import tiktoken
-    TIKTOKEN_AVAILABLE = True
-except ImportError:
-    TIKTOKEN_AVAILABLE = False
 
 class CodeStats:
     def __init__(self):
@@ -583,13 +578,7 @@ def compress_code(filepath: str, lines: List[str]) -> List[str]:
     return compressed_lines
 
 def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats, 
-                output_file: str, markdown_output: bool, compression_level: int = 0):
-    """
-    Write the output file with the specified compression level:
-    0 = no compression (default)
-    1 = function definitions only (mini mode)
-    2 = extreme compression (minimize token count)
-    """
+                output_file: str, markdown_output: bool, compress: bool):
     content = f"# Code Analysis Report\n\n{str(stats)}\n\n" if markdown_output else str(stats)
 
     for filepath, file_content in processed_files:
@@ -619,115 +608,21 @@ def write_output(processed_files: List[Tuple[str, str]], stats: CodeStats,
 
     return output_file
 
-def count_tokens_simple(text: str) -> int:
-    """Count tokens using a basic approach (words and non-whitespace symbols)."""
+def count_tokens(text: str) -> int:
     return len(re.findall(r'\w+|\S', text))
 
-def count_tokens_improved(text: str) -> int:
-    """
-    Count tokens using a heuristic approximation of how LLMs tokenize text.
-    This implementation provides a better estimate than simple word splitting.
-    """
-    # Handle common punctuation and special characters as separate tokens
-    text = re.sub(r'([.,!?;:()[\]{}"\'])', r' \1 ', text)
-    
-    # Handle contractions specially
-    text = re.sub(r"([a-zA-Z])'([a-zA-Z])", r"\1 ' \2", text)
-    
-    # Split on whitespace to get raw tokens
-    raw_tokens = text.split()
-    
-    total_tokens = 0
-    for token in raw_tokens:
-        # Count numbers as single tokens
-        if re.match(r'^\d+$', token):
-            total_tokens += 1
-            continue
-            
-        # Count individual punctuation as single tokens
-        if re.match(r'^[.,!?;:()[\]{}"\']$', token):
-            total_tokens += 1
-            continue
-            
-        # Handle tokens with mixed alphanumerics
-        if re.search(r'[a-zA-Z0-9]', token):
-            # Count uppercase runs as potential separate tokens (e.g., "GPT" -> "G", "P", "T")
-            uppercase_runs = len(re.findall(r'[A-Z]{2,}', token))
-            if uppercase_runs > 0:
-                # Adjust for uppercase runs
-                total_tokens += len(token) // 2 + 1
-            else:
-                # For regular words, estimate based on length (an approximation)
-                if len(token) <= 4:
-                    total_tokens += 1
-                else:
-                    # Longer words might be split into subwords by tokenizers
-                    total_tokens += max(1, len(token) // 4 + 1)
-        else:
-            # Handle other symbols
-            total_tokens += len(token)
-    
-    return total_tokens
-
-def count_tokens_tiktoken(text: str, model: str = "gpt-4.5") -> int:
-    """
-    Count tokens using the OpenAI tiktoken library, which provides
-    the most accurate token counting for GPT models.
-    """
-    if not TIKTOKEN_AVAILABLE:
-        print("Warning: tiktoken not installed. Using improved tokenization method instead.")
-        return count_tokens_improved(text)
-    
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-        return len(encoding.encode(text))
-    except Exception as e:
-        print(f"Error using tiktoken: {e}. Falling back to improved tokenization method.")
-        return count_tokens_improved(text)
-
-def count_tokens(text: str, method: str = "improved", model: str = "gpt-4.5") -> int:
-    """
-    Count tokens using the specified method.
-    
-    Args:
-        text: The text to tokenize
-        method: One of "simple", "improved", or "tiktoken"
-        model: The model to use for tiktoken (default: "gpt-4.5")
-    
-    Returns:
-        The number of tokens
-    """
-    if method == "simple":
-        return count_tokens_simple(text)
-    elif method == "tiktoken":
-        return count_tokens_tiktoken(text, model)
-    else:  # Default to improved
-        return count_tokens_improved(text)
-
 def main():
-    # Create a completely new argument parser to avoid any conflicts with old parameters
     parser = argparse.ArgumentParser(
-        description='Consolidate code files into a single text file with advanced features.',
-        conflict_handler='resolve')  # This will overwrite any conflicting arguments
-        
-    # Define all arguments from scratch
-    parser.add_argument('folder_path', type=str, 
-                       help='Path to the project folder')
+        description='Consolidate code files into a single text file with advanced features.')
+    parser.add_argument('folder_path', type=str, help='Path to the project folder')
     parser.add_argument('--languages', type=str, nargs='+', 
                        help='Specific languages to include (default: auto-detect)')
     parser.add_argument('--prettify', action='store_true', 
                        help='Enable syntax highlighting in output')
     parser.add_argument('--markdown', action='store_true', 
                        help='Output in Markdown format')
-    parser.add_argument('--compress', type=int, default=0, choices=[0, 1, 2],
-                       help='Compression level: 0=none, 1=function definitions only (shows only function signatures), 2=extreme compression (minimizes token count)')
-    parser.add_argument('--tokenizer', type=str, 
-                       choices=['simple', 'improved', 'tiktoken'], default='tiktoken',
-                       help='Tokenization method to use for token counting: simple (basic word count), '
-                            'improved (heuristic approximation), or tiktoken (exact GPT tokenization, requires package) '
-                            '(default: tiktoken)')
-    parser.add_argument('--model', type=str, default='gpt-4.5',
-                       help='Model to use for tiktoken tokenization when --tokenizer=tiktoken (default: gpt-4.5)')
+    parser.add_argument('--compress', action='store_true', 
+                       help='Compress output file using gzip')
     args = parser.parse_args()
 
     if not os.path.isdir(args.folder_path):
@@ -781,48 +676,26 @@ def main():
     else:
         output_file += '.txt'
 
-    # Write output with chosen format and compression level
+    # Write output with chosen format and compression
     output_file = write_output(
         processed_files, stats, output_file,
         args.markdown, args.compress
     )
 
     # Count tokens in final output
-    with open(output_file, 'r', encoding='utf-8') as f:
+    with open(output_file, 'r', encoding='utf-8') if not args.compress else \
+         gzip.open(output_file, 'rt', encoding='utf-8') as f:
         content = f.read()
-        
-        # Use selected tokenization method
-        num_tokens = count_tokens(content, method=args.tokenizer, model=args.model)
-        
-        # Get counts using other methods if tiktoken is available
-        if args.tokenizer == 'tiktoken' and TIKTOKEN_AVAILABLE:
-            simple_count = count_tokens_simple(content)
-            improved_count = count_tokens_improved(content)
-            tiktoken_count = num_tokens
-            
-            # Calculate differences between methods
-            simple_diff = ((simple_count - tiktoken_count) / tiktoken_count) * 100
-            improved_diff = ((improved_count - tiktoken_count) / tiktoken_count) * 100
-        
+        num_tokens = count_tokens(content)
         file_size = os.path.getsize(output_file)
         file_size_str = humanize.naturalsize(file_size, binary=True)
 
     print(stats)
     
     print(f'\nOutput Statistics:')
-    tokenizer_method = f" ({args.tokenizer}{' tokenizer' if args.tokenizer != 'tiktoken' else f', using {args.model} model'})"
-    print(f'Token Count: {num_tokens:,}{tokenizer_method}')
-    
-    # Show comparison of different tokenization methods if tiktoken is available
-    if args.tokenizer == 'tiktoken' and TIKTOKEN_AVAILABLE:
-        print(f'  Simple tokenizer: {simple_count:,} tokens ({simple_diff:+.1f}%)')
-        print(f'  Improved tokenizer: {improved_count:,} tokens ({improved_diff:+.1f}%)')
-    
+    print(f'Token Count: {num_tokens:,}')
     print(f'File Size: {file_size_str}')
     print(f'Output File: {output_file}\n')
-    
-    if args.tokenizer == 'tiktoken' and not TIKTOKEN_AVAILABLE:
-        print("Note: For more accurate token counting, install tiktoken: pip install tiktoken")
 
 if __name__ == '__main__':
     main()
