@@ -776,7 +776,15 @@ EOL
     # Install Node.js global packages
     sudo -u $username bash -c "source /home/$username/.nvm/nvm.sh && npm install -g yarn pnpm typescript ts-node nodemon pm2 eslint prettier"
     
-    print_success "Development tools installed"
+    # Install Claude Code and Gemini CLI
+	npm install -g @anthropic-ai/claude-code
+	npm install -g @google/gemini-cli
+
+	echo "alias claude-go=\"claude --dangerously-skip-permissions\"" >> ~/.bashrc
+	echo "alias claude-gores=\"claude --dangerously-skip-permissions --resume\"" >> ~/.bashrc
+	echo "alias gemini-go=\"GOOGLE_CLOUD_PROJECT=main-416722 gemini --yolo\"" >> ~/.bashrc
+	
+	print_success "Development tools installed"
     
     # Configure Git
     print_status "Configuring Git..."
