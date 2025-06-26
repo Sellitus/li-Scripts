@@ -254,6 +254,14 @@ if [[ $basicChoice == "y" ]]; then
 	
 	
 	apt --fix-broken install -y
+
+	# Install Claude Code and Gemini CLI
+	npm install -g @anthropic-ai/claude-code
+	npm install -g @google/gemini-cli
+
+	echo "alias claude-go=\"claude --dangerously-skip-permissions\"" >> ~/.bashrc
+	echo "alias claude-gores=\"claude --dangerously-skip-permissions --resume\"" >> ~/.bashrc
+	echo "alias gemini-go=\"GOOGLE_CLOUD_PROJECT=main-416722 gemini --yolo\"" >> ~/.bashrc
 fi
 
 
