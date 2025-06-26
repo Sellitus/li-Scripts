@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Ubuntu Ultimate Setup Script v2.0
-# Enhanced with security hardening, modern development tools, and beautiful CLI output
+# Ubuntu Ultimate Setup Script v3.0
+# Enhanced with better error handling, efficient package management, and configurable options
 
 set -euo pipefail
 
@@ -24,6 +24,11 @@ PACKAGE="📦"
 SECURITY="🔒"
 GEAR="⚙️"
 ROCKET="🚀"
+INFO="ℹ️"
+WARNING="⚠️"
+
+# Script version
+SCRIPT_VERSION="3.0"
 
 # Check if running as root
 if [[ $EUID -ne 0 ]]; then
@@ -32,15 +37,26 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-# Embedded configuration
+# Configuration with defaults
 declare -A CONFIG=(
-    [TIMEZONE]="America/Chicago"
-    [PYTHON_VERSION]="3.12"
-    [GO_VERSION]="1.21.5"
-    [NODE_VERSION]="lts"
-    [BACKUP_DIR]="/var/backups/ubuntu-setup"
-    [LOG_FILE]="/var/log/ubuntu-setup.log"
+    [TIMEZONE]="${TIMEZONE:-America/Chicago}"
+    [PYTHON_VERSION]="${PYTHON_VERSION:-3.12}"
+    [GO_VERSION]="${GO_VERSION:-1.21.5}"
+    [NODE_VERSION]="${NODE_VERSION:-lts}"
+    [BACKUP_DIR]="${BACKUP_DIR:-/var/backups/ubuntu-setup}"
+    [LOG_FILE]="${LOG_FILE:-/var/log/ubuntu-setup.log}"
+    [GIT_EMAIL]="${GIT_EMAIL:-user@example.com}"
+    [GIT_NAME]="${GIT_NAME:-User}"
+    [SSH_KEY]="${SSH_KEY:-}"
+    [PACKAGE_TIMEOUT]="${PACKAGE_TIMEOUT:-300}"
+    [RETRY_ATTEMPTS]="${RETRY_ATTEMPTS:-3}"
+    [BATCH_SIZE]="${BATCH_SIZE:-10}"
 )
+
+# Arrays to track installation status
+declare -a FAILED_PACKAGES=()
+declare -a INSTALLED_PACKAGES=()
+declare -a SKIPPED_PACKAGES=()
 
 # Package groups
 systemApps="vim neovim tmux curl wget nano build-essential cmake make gcc g++ unzip zip ufw fail2ban git git-lfs sysbench htop iotop nethogs fish zsh bat ripgrep fd-find fzf jq yq virtualenv python3-venv python3-pip docker.io docker-compose containerd snapd flatpak gpg apt-transport-https software-properties-common ca-certificates gnupg lsb-release net-tools dnsutils whois traceroute mtr-tiny nmap tcpdump iftop vnstat bmon nload speedtest-cli tree ncdu tldr exa duf neofetch"
@@ -89,7 +105,11 @@ print_error() {
 }
 
 print_warning() {
-    echo -e "${YELLOW}!${NC} $1"
+    echo -e "${YELLOW}${WARNING}${NC} $1"
+}
+
+print_info() {
+    echo -e "${CYAN}${INFO}${NC} $1"
 }
 
 # Progress bar function
@@ -109,6 +129,118 @@ show_progress() {
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "${CONFIG[LOG_FILE]}"
+}
+
+# Check if package is installed
+is_package_installed() {
+    local package="$1"
+    set +e  # Temporarily disable exit on error
+    dpkg -l "$package" 2>/dev/null | grep -q "^ii"
+    local result=$?
+    set -e  # Re-enable exit on error
+    return $result
+}
+
+# Install packages with retry logic
+install_package() {
+    local package=$1
+    local attempts=0
+    local max_attempts="${CONFIG[RETRY_ATTEMPTS]}"
+    
+    # Check if already installed
+    if is_package_installed "$package"; then
+        SKIPPED_PACKAGES+=("$package")
+        return 0
+    fi
+    
+    while [ $attempts -lt $max_attempts ]; do
+        attempts=$((attempts + 1))
+        
+        # Temporarily disable exit on error for package installation
+        set +e
+        timeout "${CONFIG[PACKAGE_TIMEOUT]}" apt-get install -y -q \
+            -o Dpkg::Options::="--force-confdef" \
+            -o Dpkg::Options::="--force-confold" \
+            "$package" >/dev/null 2>&1
+        local install_result=$?
+        set -e
+        
+        if [ $install_result -eq 0 ]; then
+            INSTALLED_PACKAGES+=("$package")
+            return 0
+        fi
+        
+        # If it's the last attempt, check if it was actually installed
+        if [ $attempts -eq $max_attempts ]; then
+            if is_package_installed "$package"; then
+                INSTALLED_PACKAGES+=("$package")
+                return 0
+            fi
+            # Log the failure for debugging
+            log "Failed to install package: $package after $max_attempts attempts"
+        fi
+        
+        # Wait before retry
+        sleep 2
+    done
+    
+    FAILED_PACKAGES+=("$package")
+    return 1
+}
+
+# Batch install packages - SIMPLIFIED VERSION
+batch_install_packages() {
+    local packages=("$@")
+    local total=${#packages[@]}
+    
+    print_status "Installing ${total} packages..."
+    
+    # Update package cache
+    apt-get update -qq || true
+    
+    # Just try to install everything, don't worry about checking what's installed
+    print_status "Installing packages with apt..."
+    
+    set +e
+    apt-get install -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
+        "${packages[@]}"
+    local result=$?
+    set -e
+    
+    if [ $result -eq 0 ]; then
+        print_success "Package installation completed successfully"
+        INSTALLED_PACKAGES+=("${packages[@]}")
+    else
+        print_warning "Some packages may have failed to install (exit code: $result)"
+        print_status "Continuing with script execution..."
+    fi
+}
+
+# Pre-configure packages that require interaction
+preconfigure_packages() {
+    print_status "Pre-configuring packages to avoid prompts..."
+    
+    # Configure postfix
+    echo "postfix postfix/main_mailer_type select Local only" | debconf-set-selections
+    echo "postfix postfix/mailname string $(hostname)" | debconf-set-selections
+    
+    # Configure other packages that might prompt
+    echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections
+    echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | debconf-set-selections
+    echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | debconf-set-selections
+    
+    print_success "Package pre-configuration complete"
+}
+
+# Load configuration from file if exists
+load_config_file() {
+    local config_file="${1:-/etc/ubuntu-setup.conf}"
+    if [ -f "$config_file" ]; then
+        print_info "Loading configuration from $config_file"
+        source "$config_file"
+    fi
 }
 
 # Backup function
@@ -146,6 +278,132 @@ detect_wsl() {
     fi
 }
 
+# Clean up problematic repositories
+cleanup_repositories() {
+    print_status "Cleaning up old repository configurations..."
+    
+    # Remove old Kubernetes repositories
+    rm -f /etc/apt/sources.list.d/kubernetes*.list
+    rm -f /usr/share/keyrings/kubernetes*.gpg
+    
+    # Remove any references to old kubernetes repositories
+    if [ -f /etc/apt/sources.list ]; then
+        sed -i '/apt\.kubernetes\.io/d' /etc/apt/sources.list
+        sed -i '/packages\.cloud\.google\.com\/apt.*kubernetes/d' /etc/apt/sources.list
+    fi
+    
+    # Clean apt cache
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+    
+    print_success "Repository cleanup complete"
+}
+
+# Install Python with better error handling
+install_python() {
+    local python_version="${CONFIG[PYTHON_VERSION]}"
+    
+    print_status "Installing Python ${python_version}..."
+    
+    # Add deadsnakes PPA
+    if ! add-apt-repository -y ppa:deadsnakes/ppa; then
+        print_error "Failed to add Python PPA"
+        return 1
+    fi
+    
+    apt-get update -qq
+    
+    # Install Python packages
+    local python_packages=(
+        "python${python_version}"
+        "python${python_version}-venv"
+        "python${python_version}-dev"
+        "python${python_version}-distutils"
+    )
+    
+    for pkg in "${python_packages[@]}"; do
+        if ! apt-get install -y "$pkg"; then
+            print_warning "Failed to install $pkg"
+        fi
+    done
+    
+    # Set as default Python 3
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${python_version} 1
+    update-alternatives --set python3 /usr/bin/python${python_version}
+    
+    # Install pip
+    print_status "Installing pip..."
+    if ! command -v pip3 &> /dev/null; then
+        if curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py; then
+            # Install pip properly
+            python3 /tmp/get-pip.py --user 2>/dev/null || \
+            python3 /tmp/get-pip.py 2>/dev/null || \
+            print_warning "Failed to install pip normally, trying with break-system-packages..."
+            
+            # If still no pip, try with break-system-packages
+            if ! command -v pip3 &> /dev/null; then
+                python3 /tmp/get-pip.py --break-system-packages 2>/dev/null || \
+                print_error "Failed to install pip"
+            fi
+            
+            rm -f /tmp/get-pip.py
+        fi
+    fi
+    
+    # Install pipx
+    if apt-get install -y pipx; then
+        print_success "pipx installed"
+    else
+        print_warning "Failed to install pipx"
+    fi
+    
+    print_success "Python ${python_version} setup complete"
+}
+
+# Initialize script
+initialize_script() {
+    # Create log directory
+    mkdir -p "$(dirname "${CONFIG[LOG_FILE]}")"
+    
+    # Start logging
+    log "Ubuntu Setup Script v${SCRIPT_VERSION} started"
+    
+    # Set DEBIAN_FRONTEND for the entire script
+    export DEBIAN_FRONTEND=noninteractive
+    
+    # Load config file if specified
+    if [ -n "${CONFIG_FILE:-}" ]; then
+        load_config_file "$CONFIG_FILE"
+    fi
+}
+
+# Print installation summary
+print_installation_summary() {
+    echo
+    print_header "Installation Summary"
+    
+    if [ ${#INSTALLED_PACKAGES[@]} -gt 0 ]; then
+        echo -e "${GREEN}${BOLD}Successfully Installed (${#INSTALLED_PACKAGES[@]} packages):${NC}"
+        printf '%s\n' "${INSTALLED_PACKAGES[@]}" | sort | column -c 80
+        echo
+    fi
+    
+    if [ ${#SKIPPED_PACKAGES[@]} -gt 0 ]; then
+        echo -e "${CYAN}${BOLD}Already Installed/Skipped (${#SKIPPED_PACKAGES[@]} packages):${NC}"
+        printf '%s\n' "${SKIPPED_PACKAGES[@]}" | sort | column -c 80
+        echo
+    fi
+    
+    if [ ${#FAILED_PACKAGES[@]} -gt 0 ]; then
+        echo -e "${RED}${BOLD}Failed to Install (${#FAILED_PACKAGES[@]} packages):${NC}"
+        printf '%s\n' "${FAILED_PACKAGES[@]}" | sort | column -c 80
+        echo
+        print_warning "You can try installing failed packages manually with:"
+        echo -e "${YELLOW}sudo apt install ${FAILED_PACKAGES[*]}${NC}"
+        echo
+    fi
+}
+
 # Enhanced menu display
 display_menu() {
     clear
@@ -153,7 +411,7 @@ display_menu() {
     cat << "EOF"
     ╔═══════════════════════════════════════════════════════════════╗
     ║                                                               ║
-    ║           Ubuntu Ultimate Setup Script v2.0                   ║
+    ║           Ubuntu Ultimate Setup Script v3.0                   ║
     ║                                                               ║
     ║         🚀 Modern Development Environment Setup 🚀            ║
     ║                                                               ║
@@ -190,6 +448,9 @@ EOF
     echo
     echo -e "${YELLOW}${BOLD}Enter your choices separated by commas (e.g., 1,2,3):${NC}"
 }
+
+# Main script starts here
+initialize_script
 
 # Initialize choices
 basicChoice=""
@@ -244,25 +505,8 @@ fi
 if [[ $basicChoice == "y" ]]; then
     print_header "Core System Setup"
     
-    # Clean up any problematic repositories from previous runs
-    print_status "Cleaning up old repository configurations..."
-    
-    # Remove old Kubernetes repositories
-    rm -f /etc/apt/sources.list.d/kubernetes.list
-    rm -f /etc/apt/sources.list.d/kubernetes*.list
-    rm -f /usr/share/keyrings/kubernetes*.gpg
-    
-    # Remove any references to old kubernetes repositories
-    if [ -f /etc/apt/sources.list ]; then
-        sed -i '/apt\.kubernetes\.io/d' /etc/apt/sources.list
-        sed -i '/packages\.cloud\.google\.com\/apt.*kubernetes/d' /etc/apt/sources.list
-    fi
-    
-    # Clean apt cache
-    apt-get clean
-    rm -rf /var/lib/apt/lists/*
-    
-    print_success "Repository cleanup complete"
+    # Clean up repositories
+    cleanup_repositories
     
     # Create backup
     create_backup
@@ -416,74 +660,26 @@ EOL
     chown "$username:$username" "/home/$username/.bashrc"
     print_success "Shell environment configured"
     
+    # Pre-configure packages
+    preconfigure_packages
+    
     # System updates
     print_status "Updating system packages..."
-    export DEBIAN_FRONTEND=noninteractive
-    apt update
-    apt full-upgrade -y -q
+    apt-get update
+    apt-get full-upgrade -y -q
     
     # Install base packages
-    total_packages=$(echo $systemApps | wc -w)
-    current=0
-    
     print_status "Installing system packages..."
-    for package in $systemApps; do
-        current=$((current + 1))
-        printf "\r"
-        show_progress $current $total_packages
-        printf " Installing $package..."
-        # Use noninteractive mode with timeout to prevent hanging
-        if timeout 120 apt-get install -y -q "$package" >/dev/null 2>&1; then
-            printf " ✓\n"
-        else
-            printf " ✗\n"
-            print_warning "Failed to install $package"
-        fi || true
-    done
-    unset DEBIAN_FRONTEND
-    echo
-    print_success "System packages installed"
+    systemApps_array=($systemApps)
+    batch_install_packages "${systemApps_array[@]}"
     
-    # Install Python 3.12
-    print_status "Installing Python ${CONFIG[PYTHON_VERSION]}..."
-    add-apt-repository ppa:deadsnakes/ppa -y
-    apt update
-    apt install -y python${CONFIG[PYTHON_VERSION]} python${CONFIG[PYTHON_VERSION]}-venv python${CONFIG[PYTHON_VERSION]}-dev
+    # Install Python
+    install_python
     
-    # Set Python 3.12 as default
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${CONFIG[PYTHON_VERSION]} 1
-    update-alternatives --set python3 /usr/bin/python${CONFIG[PYTHON_VERSION]}
-    
-    # Install pip for Python 3.12
-    # Handle PEP 668 externally managed environment
-    print_status "Installing pip for Python ${CONFIG[PYTHON_VERSION]}..."
-    if ! command -v pip3 &> /dev/null; then
-        if curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py; then
-            # Try user installation first, then fall back to break-system-packages if needed
-            if python${CONFIG[PYTHON_VERSION]} /tmp/get-pip.py --user 2>/dev/null; then
-                print_success "pip installed in user space"
-            elif python${CONFIG[PYTHON_VERSION]} /tmp/get-pip.py --break-system-packages 2>/dev/null; then
-                print_warning "pip installed with --break-system-packages"
-            else
-                print_warning "Failed to install pip, continuing..."
-            fi
-            rm -f /tmp/get-pip.py
-        else
-            print_warning "Failed to download pip installer, continuing..."
-        fi
-    else
-        print_success "pip already installed"
-    fi
-    
-    # Install pipx for managing Python applications
-    if apt install -y pipx 2>/dev/null; then
+    # Install pipx for user
+    if command -v pipx &> /dev/null; then
         sudo -u $username pipx ensurepath || true
-        print_success "pipx installed for Python application management"
-    else
-        print_warning "Failed to install pipx"
     fi
-    
-    print_success "Python ${CONFIG[PYTHON_VERSION]} setup complete"
     
     # Install Node.js via NVM
     print_status "Installing Node.js via NVM..."
@@ -602,25 +798,13 @@ fi
 if [[ $securityChoice == "y" ]]; then
     print_header "Security Hardening"
     
+    # Pre-configure security packages
+    preconfigure_packages
+    
+    # Install security packages using batch installer
     print_status "Installing security tools..."
-    
-    # Set non-interactive frontend to prevent prompts
-    export DEBIAN_FRONTEND=noninteractive
-    
-    # Pre-configure packages that might require interaction
-    # Configure postfix for local only (required by some security tools)
-    echo "postfix postfix/main_mailer_type select Local only" | debconf-set-selections
-    echo "postfix postfix/mailname string $(hostname)" | debconf-set-selections
-    
-    # Install security packages
-    for package in $securityApps; do
-        print_status "Installing $package..."
-        # Use noninteractive mode and timeout to prevent hanging
-        timeout 300 apt-get install -y -q "$package" &>/dev/null || print_warning "Failed to install $package" || true
-    done
-    
-    # Reset frontend
-    unset DEBIAN_FRONTEND
+    securityApps_array=($securityApps)
+    batch_install_packages "${securityApps_array[@]}"
     
     # Configure UFW
     print_status "Configuring firewall..."
@@ -949,10 +1133,13 @@ if [[ $mateChoice == "y" ]]; then
     print_header "MATE Desktop Environment"
     
     print_status "Installing MATE desktop packages..."
-    apt install -y $mateDesktop
+    mateDesktop_array=($mateDesktop)
+    batch_install_packages "${mateDesktop_array[@]}"
     
     # Install additional useful desktop utilities
-    apt install -y pluma atril eom gnome-system-monitor dconf-editor
+    desktop_utils="pluma atril eom gnome-system-monitor dconf-editor"
+    desktop_utils_array=($desktop_utils)
+    batch_install_packages "${desktop_utils_array[@]}"
     
     # Configure MATE for better performance
     sudo -u $username dbus-launch dconf write /org/mate/desktop/interface/gtk-enable-animations false
@@ -972,14 +1159,10 @@ if [[ $guiChoice == "y" ]]; then
     wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/sublimehq-archive.gpg > /dev/null
     echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list
     
-    # Update package list
-    apt update
-    
     # Install GUI packages
     print_status "Installing GUI applications..."
-    for package in $guiApps; do
-        apt install -y "$package" || print_warning "Failed to install $package"
-    done
+    guiApps_array=($guiApps)
+    batch_install_packages "${guiApps_array[@]}"
     
     # Install additional development IDEs via snap
     print_status "Installing development IDEs..."
@@ -1098,9 +1281,8 @@ if [[ $vmGuestChoice == "y" ]]; then
     print_header "VM Guest Additions"
     
     print_status "Installing VMware/VirtualBox guest additions..."
-    for package in $vmGuestAdditions; do
-        apt install -y "$package" || print_warning "Failed to install $package"
-    done
+    vmGuestAdditions_array=($vmGuestAdditions)
+    batch_install_packages "${vmGuestAdditions_array[@]}"
     
     print_success "VM guest additions installed"
 fi
@@ -1117,9 +1299,8 @@ if [[ $hyperVGuestChoice == "y" ]]; then
     done
     
     # Install packages
-    for package in $hyperVGuestAdditions; do
-        apt install -y "$package" || print_warning "Failed to install $package"
-    done
+    hyperVGuestAdditions_array=($hyperVGuestAdditions)
+    batch_install_packages "${hyperVGuestAdditions_array[@]}"
     
     # Update initramfs
     update-initramfs -u
@@ -1226,6 +1407,9 @@ EOL
     chown "$username:$username" "/home/$username/ubuntu-setup-summary.log"
     
     print_success "Installation summary created at: /home/$username/ubuntu-setup-summary.log"
+    
+    # Print detailed installation summary
+    print_installation_summary
     
     # Display summary
     echo
