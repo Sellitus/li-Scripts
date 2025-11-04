@@ -576,39 +576,8 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # Modern aliases
-alias ll='exa -la --git --icons'
-alias la='exa -a --icons'
-alias l='exa --icons'
-alias tree='exa --tree --icons'
-alias cat='batcat'
-alias df='duf'
-alias du='ncdu'
-alias top='htop'
-alias vim='nvim'
-alias vi='nvim'
 alias python='python3'
 alias pip='pip3'
-
-# Git aliases
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit'
-alias gp='git push'
-alias gl='git log --oneline --graph --decorate'
-alias gd='git diff'
-alias lg='lazygit'
-
-# Docker aliases
-alias d='docker'
-alias dc='docker-compose'
-alias dps='docker ps'
-alias di='docker images'
-
-# Kubernetes aliases
-alias k='kubectl'
-alias kgp='kubectl get pods'
-alias kgs='kubectl get services'
-alias kgd='kubectl get deployments'
 
 # Tmux session helpers
 for i in {1..10}; do
