@@ -1341,9 +1341,11 @@ EOL
     
     # Setup automatic updates cron
     print_status "Setting up automatic security updates..."
-    
-    (crontab -l 2>/dev/null; echo "0 6 * * * apt update && apt-get -y upgrade && apt-get -y autoremove && apt-get -y autoclean && needrestart -ra") | crontab -
-    
+
+    set +e
+    (crontab -l 2>/dev/null || true; echo "0 6 * * * apt update && apt-get -y upgrade && apt-get -y autoremove && apt-get -y autoclean && needrestart -ra") | crontab - || print_warning "Failed to setup automatic updates cron job"
+    set -e
+
     print_success "Server setup complete"
 fi
 
