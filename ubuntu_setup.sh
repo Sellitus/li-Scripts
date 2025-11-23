@@ -67,7 +67,8 @@ systemApps="vim neovim tmux curl wget nano build-essential cmake make gcc g++ un
 # Note: debsecan removed - incompatible with Python 3.14 (requires apt_pkg module)
 # Note: aide removed - initialization takes too long (10-30+ minutes)
 # Note: apt-listchanges removed - incompatible with Python 3.14 (requires apt_pkg module)
-securityApps="rkhunter chkrootkit clamav clamav-daemon lynis samhain auditd apparmor-utils libpam-pwquality unattended-upgrades needrestart debsums fail2ban psad"
+# Note: samhain removed - causes core dumps and leaves dpkg in broken state on Ubuntu 24.04
+securityApps="rkhunter chkrootkit clamav clamav-daemon lynis auditd apparmor-utils libpam-pwquality unattended-upgrades needrestart debsums fail2ban psad"
 
 serverApps="openssh-server nginx certbot python3-certbot-nginx"
 
@@ -694,9 +695,9 @@ EOL
         mv /etc/apt/apt.conf.d/20listchanges /etc/apt/apt.conf.d/20listchanges.disabled 2>/dev/null || true
     fi
 
-    # Remove broken packages from previous runs (before upgrade tries to configure them)
-    print_status "Removing packages incompatible with Python 3.14..."
-    dpkg --remove --force-remove-reinstreq debsecan apt-listchanges 2>/dev/null || true
+    # Remove broken/incompatible packages from previous runs (before upgrade tries to configure them)
+    print_status "Removing problematic packages from previous runs..."
+    dpkg --remove --force-remove-reinstreq debsecan apt-listchanges samhain 2>/dev/null || true
 
     # Fix any broken package dependencies
     apt-get -f install -y 2>/dev/null || true
@@ -960,6 +961,11 @@ if [[ $securityChoice == "y" ]]; then
     securityApps_array=($securityApps)
     batch_install_packages "${securityApps_array[@]}"
 
+    # Fix any broken packages before continuing (prevents subsequent apt failures)
+    print_status "Cleaning up package state..."
+    apt-get -f install -y 2>/dev/null || true
+    dpkg --configure -a 2>/dev/null || true
+
     # NOTE: Cleanup of incompatible packages (debsecan, apt-listchanges) moved to
     # pre-flight checks (lines 694-699) to prevent failures during apt-get full-upgrade
     # This ensures cleanup happens BEFORE apt operations, not after
@@ -1004,12 +1010,19 @@ EOL
     # Configure rkhunter
     print_status "Configuring rkhunter..."
 
-    # Fix rkhunter configuration warnings
+    # Fix rkhunter configuration for reliable updates
     if [ -f /etc/rkhunter.conf ]; then
-        # Set proper WEB_CMD to avoid warnings
-        sed -i 's|^WEB_CMD=.*|WEB_CMD=/usr/bin/curl|' /etc/rkhunter.conf
+        # Set proper WEB_CMD with timeout to avoid hangs
+        sed -i 's|^WEB_CMD=.*|WEB_CMD="/usr/bin/curl -fsS --connect-timeout 10"|' /etc/rkhunter.conf
+        sed -i 's|^#WEB_CMD=.*|WEB_CMD="/usr/bin/curl -fsS --connect-timeout 10"|' /etc/rkhunter.conf
         # Allow package manager updates
         sed -i 's|^#PKGMGR=.*|PKGMGR=DPKG|' /etc/rkhunter.conf
+        # Use any available mirror (not just local)
+        sed -i 's|^MIRRORS_MODE=.*|MIRRORS_MODE=0|' /etc/rkhunter.conf
+        sed -i 's|^#MIRRORS_MODE=.*|MIRRORS_MODE=0|' /etc/rkhunter.conf
+        # Enable mirror list updates
+        sed -i 's|^UPDATE_MIRRORS=.*|UPDATE_MIRRORS=1|' /etc/rkhunter.conf
+        sed -i 's|^#UPDATE_MIRRORS=.*|UPDATE_MIRRORS=1|' /etc/rkhunter.conf
     fi
 
     # rkhunter updates often fail due to network issues - don't exit script
@@ -1019,29 +1032,6 @@ EOL
     set -e
 
     print_success "rkhunter configured"
-
-    # Configure samhain (file integrity monitoring)
-    print_status "Configuring samhain..."
-    if command -v samhain &> /dev/null; then
-        # Stop samhain if running
-        systemctl stop samhain 2>/dev/null || true
-
-        # Initialize samhain database
-        print_status "Initializing samhain database (this may take a few minutes)..."
-        samhain -t init 2>/dev/null || {
-            print_warning "samhain database initialization had warnings, continuing..."
-        }
-
-        # Start and enable samhain service
-        systemctl enable samhain 2>/dev/null || true
-        systemctl start samhain 2>/dev/null || {
-            print_warning "samhain service may require additional configuration"
-        }
-
-        print_success "samhain configured"
-    else
-        print_warning "samhain not installed, skipping configuration"
-    fi
 
     # Configure ClamAV
     print_status "Configuring ClamAV..."
@@ -1162,16 +1152,25 @@ kernel.pid_max = 65535
 net.ipv4.ip_local_port_range = 2000 65000
 EOL
     
-    sysctl -p /etc/sysctl.d/99-security.conf
-    
+    set +e
+    sysctl -p /etc/sysctl.d/99-security.conf 2>/dev/null || print_warning "Some sysctl settings may not have applied"
+
     # Configure password quality
-    apt install -y libpam-pwquality
-    sed -i 's/# minlen = 8/minlen = 12/' /etc/security/pwquality.conf
-    sed -i 's/# ucredit = -1/ucredit = -1/' /etc/security/pwquality.conf
-    sed -i 's/# lcredit = -1/lcredit = -1/' /etc/security/pwquality.conf
-    sed -i 's/# dcredit = -1/dcredit = -1/' /etc/security/pwquality.conf
-    sed -i 's/# ocredit = -1/ocredit = -1/' /etc/security/pwquality.conf
-    
+    # Note: libpam-pwquality should already be installed from batch, but ensure it's there
+    apt install -y libpam-pwquality 2>/dev/null || true
+
+    # Configure password quality settings (only if config file exists)
+    if [ -f /etc/security/pwquality.conf ]; then
+        sed -i 's/# minlen = 8/minlen = 12/' /etc/security/pwquality.conf
+        sed -i 's/# ucredit = -1/ucredit = -1/' /etc/security/pwquality.conf
+        sed -i 's/# lcredit = -1/lcredit = -1/' /etc/security/pwquality.conf
+        sed -i 's/# dcredit = -1/dcredit = -1/' /etc/security/pwquality.conf
+        sed -i 's/# ocredit = -1/ocredit = -1/' /etc/security/pwquality.conf
+    else
+        print_warning "Password quality config not found, skipping configuration"
+    fi
+    set -e
+
     print_success "System hardening applied"
     
     # Setup security scanning cron jobs
