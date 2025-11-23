@@ -1229,9 +1229,18 @@ if [[ $serverChoice == "y" ]]; then
 
     # Add your public key
     # NOTE: This is a personal SSH key - replace with your own public key
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuPn0cnBDl7BOEecgcbrWvM+dIBuKZZaRYRMqoYv2Aw sellitus@ss-MacBook-Pro.local" > "/home/$username/.ssh/authorized_keys"
-    chown "$username:$username" "/home/$username/.ssh/authorized_keys"
-    chmod 600 "/home/$username/.ssh/authorized_keys"
+    ssh_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPuPn0cnBDl7BOEecgcbrWvM+dIBuKZZaRYRMqoYv2Aw sellitus@ss-MacBook-Pro.local"
+    auth_keys_file="/home/$username/.ssh/authorized_keys"
+    if [ -f "$auth_keys_file" ]; then
+        # Only add if key doesn't already exist (preserves existing keys)
+        if ! grep -qF "AAAAC3NzaC1lZDI1NTE5AAAAIPuPn0cnBDl7BOEecgcbrWvM+dIBuKZZaRYRMqoYv2Aw" "$auth_keys_file"; then
+            echo "$ssh_key" >> "$auth_keys_file"
+        fi
+    else
+        echo "$ssh_key" > "$auth_keys_file"
+    fi
+    chown "$username:$username" "$auth_keys_file"
+    chmod 600 "$auth_keys_file"
     
     # Create hardened SSH config
     cat > /etc/ssh/sshd_config.d/99-hardened.conf << EOL
