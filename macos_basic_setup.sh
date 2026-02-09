@@ -3,7 +3,7 @@
 
 
 # User editable options
-brewApps="python@3.11 neovim lazygit"
+brewApps="python@3.11 neovim lazygit coreutils"
 serverApps="openssh-server"
 
 
@@ -70,6 +70,9 @@ if [[ $basicChoice == "y" ]]; then
 		echo "\n\n ----- Installing: $currPackage ----- \n\n"
 		brew install $currPackage
 	done
+
+	# Link gtimeout to timeout for Linux compatibility
+	sudo ln -s /usr/local/bin/gtimeout /usr/local/bin/timeout
 
 	# Switch to using python3.11 installed by brew
 	echo "alias python=/opt/homebrew/bin/python3.11" >> ~/.bashrc
