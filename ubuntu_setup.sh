@@ -690,6 +690,21 @@ EOL
         mv /etc/apt/apt.conf.d/50command-not-found /etc/apt/apt.conf.d/50command-not-found.disabled 2>/dev/null || true
     fi
 
+    # Fix command-not-found script to use system Python with apt_pkg support
+    # The script uses #!/usr/bin/python3 but apt_pkg only works with system Python
+    if [ -f /usr/lib/command-not-found ]; then
+        # Detect the original system Python (before we change the default)
+        # On Ubuntu 24.04 it's python3.12, on 22.04 it's python3.10
+        for sys_python in python3.12 python3.11 python3.10; do
+            if [ -x "/usr/bin/$sys_python" ]; then
+                print_status "Fixing command-not-found to use $sys_python..."
+                sed -i "1s|^#!/usr/bin/python3$|#!/usr/bin/$sys_python|" /usr/lib/command-not-found
+                print_success "command-not-found fixed"
+                break
+            fi
+        done
+    fi
+
     # Disable apt-listchanges hook (prevents it from running during upgrades)
     if [ -f /etc/apt/apt.conf.d/20listchanges ]; then
         mv /etc/apt/apt.conf.d/20listchanges /etc/apt/apt.conf.d/20listchanges.disabled 2>/dev/null || true
