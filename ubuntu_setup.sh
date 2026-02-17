@@ -60,7 +60,7 @@ declare -a SKIPPED_PACKAGES=()
 
 # Package groups
 # Note: fastfetch, dust, and btop++ installed separately (not in Ubuntu repos)
-systemApps="vim neovim tmux curl wget nano build-essential cmake make gcc g++ unzip zip ufw fail2ban git git-lfs sysbench htop iotop nethogs nvtop fish zsh bat ripgrep fd-find fzf jq yq virtualenv python3-venv python3-pip docker.io docker-compose containerd snapd flatpak gpg apt-transport-https software-properties-common ca-certificates gnupg lsb-release net-tools dnsutils whois traceroute mtr-tiny nmap tcpdump iftop vnstat bmon nload speedtest-cli tree ncdu tldr eza duf plocate"
+systemApps="vim neovim tmux curl wget nano build-essential cmake make gcc g++ unzip zip ufw fail2ban git git-lfs sysbench htop iotop nethogs nvtop fish zsh bat ripgrep fd-find fzf jq yq virtualenv python3-venv python3-pip docker.io docker-compose containerd snapd flatpak gpg apt-transport-https software-properties-common ca-certificates gnupg lsb-release net-tools dnsutils whois traceroute mtr-tiny nmap tcpdump iftop vnstat bmon nload speedtest-cli tree ncdu tldr eza duf plocate pciutils"
 
 # Note: tripwire removed as it requires interactive configuration
 # Note: tiger removed as deprecated (last update 2008)
@@ -1600,7 +1600,72 @@ EOL
     if command -v updatedb &> /dev/null; then
         updatedb 2>/dev/null || print_warning "updatedb failed, skipping"
     fi
-    
+
+    # =========================================================================
+    # NVIDIA GPU Detection and Driver Installation
+    # =========================================================================
+    print_status "Checking for NVIDIA GPU..."
+
+    # Disable errexit for this block — driver install is best-effort and must
+    # never abort the rest of the setup script.
+    set +e
+
+    if lspci 2>/dev/null | grep -qi nvidia; then
+        DETECTED_GPU=$(lspci | grep -i nvidia | head -n1 | sed 's/.*: //')
+        print_status "NVIDIA GPU detected: $DETECTED_GPU"
+
+        # Check if a driver is already loaded
+        if command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null; then
+            EXISTING_DRIVER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -n1)
+            print_success "NVIDIA driver already installed (version $EXISTING_DRIVER) — skipping installation"
+        else
+            print_status "No working NVIDIA driver found. Attempting to install latest open kernel module driver..."
+
+            NVIDIA_PKG=""
+
+            # Strategy 1: Use ubuntu-drivers to find the recommended -open driver
+            apt-get install -y ubuntu-drivers-common &>/dev/null
+            if command -v ubuntu-drivers &>/dev/null; then
+                # ubuntu-drivers devices outputs lines like:
+                #   nvidia-driver-550-open - distro non-free recommended
+                NVIDIA_PKG=$(ubuntu-drivers devices 2>/dev/null \
+                    | grep -oP 'nvidia-driver-\d+-open' \
+                    | sort -t- -k3 -n \
+                    | tail -n1)
+                if [[ -n "$NVIDIA_PKG" ]]; then
+                    print_status "ubuntu-drivers recommends: $NVIDIA_PKG"
+                fi
+            fi
+
+            # Strategy 2 (fallback): Query apt-cache for highest-versioned -open package
+            if [[ -z "$NVIDIA_PKG" ]]; then
+                print_warning "ubuntu-drivers did not find a recommended -open driver, falling back to apt-cache search..."
+                NVIDIA_PKG=$(apt-cache pkgnames nvidia-driver- 2>/dev/null \
+                    | grep -E '^nvidia-driver-[0-9]+-open$' \
+                    | sort -t- -k3 -n \
+                    | tail -n1)
+                if [[ -n "$NVIDIA_PKG" ]]; then
+                    print_status "apt-cache found: $NVIDIA_PKG"
+                fi
+            fi
+
+            if [[ -n "$NVIDIA_PKG" ]]; then
+                print_status "Installing $NVIDIA_PKG ..."
+                if apt-get install -y "$NVIDIA_PKG"; then
+                    print_success "$NVIDIA_PKG installed successfully. A reboot is required to activate the driver."
+                else
+                    print_error "Failed to install $NVIDIA_PKG. You may need to install the driver manually after reboot."
+                fi
+            else
+                print_warning "Could not determine an appropriate NVIDIA open driver package. Install manually after reboot."
+            fi
+        fi
+    else
+        print_status "No NVIDIA GPU detected — skipping driver installation"
+    fi
+
+    set -euo pipefail
+
     # Create summary log
     print_status "Creating installation summary..."
     
@@ -1630,6 +1695,8 @@ Key Information:
 - Node.js version: $(sudo -u $username bash -c 'source ~/.nvm/nvm.sh && node --version' 2>/dev/null || echo "Not installed")
 - Go version: $(go version 2>/dev/null || echo "Not installed")
 - Docker version: $(docker --version 2>/dev/null || echo "Not installed")
+- NVIDIA GPU: $(lspci 2>/dev/null | grep -i nvidia | head -n1 | sed 's/.*: //' || echo "None detected")
+- NVIDIA Driver: $(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null || echo "Not installed")
 
 Security Status:
 - Firewall: $(ufw status | grep -q "Status: active" && echo "Active" || echo "Inactive")
