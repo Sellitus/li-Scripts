@@ -584,6 +584,58 @@ repair_grub() {
         cp /etc/resolv.conf "$MOUNT_ROOT/etc/resolv.conf" 2>/dev/null || true
     fi
 
+    # Fix apt_pkg module — Python version mismatch between live CD and installed system
+    # update-grub calls scripts that import apt_pkg, a compiled C extension (.so) built
+    # for a specific Python version. If the live CD's Python differs from the installed
+    # system's Python, the import fails with "No module named 'apt_pkg'".
+    # Fix: symlink the existing .so to the name the chroot's Python expects.
+    fix_apt_pkg() {
+        local apt_pkg_dir="$MOUNT_ROOT/usr/lib/python3/dist-packages"
+        [[ -d "$apt_pkg_dir" ]] || return 0
+
+        # Find the chroot's Python version
+        local chroot_py_ver
+        chroot_py_ver=$(chroot "$MOUNT_ROOT" python3 -c "import sys; print(f'{sys.version_info.major}{sys.version_info.minor}')" 2>/dev/null) || return 0
+
+        # Check if apt_pkg already works
+        if chroot "$MOUNT_ROOT" python3 -c "import apt_pkg" 2>/dev/null; then
+            return 0
+        fi
+
+        print_warn "apt_pkg module not loadable — attempting fix..."
+
+        # Find any existing apt_pkg .so file
+        local existing_so
+        existing_so=$(find "$apt_pkg_dir" -name "apt_pkg.cpython-*.so" 2>/dev/null | head -1)
+
+        if [[ -z "$existing_so" ]]; then
+            # Try to reinstall python3-apt inside the chroot
+            print_status "No apt_pkg .so found — attempting to reinstall python3-apt..."
+            chroot "$MOUNT_ROOT" apt-get install --reinstall -y python3-apt 2>/dev/null || true
+            existing_so=$(find "$apt_pkg_dir" -name "apt_pkg.cpython-*.so" 2>/dev/null | head -1)
+        fi
+
+        if [[ -n "$existing_so" ]]; then
+            local target_name="apt_pkg.cpython-${chroot_py_ver}-x86_64-linux-gnu.so"
+            local target_path="$apt_pkg_dir/$target_name"
+            if [[ ! -f "$target_path" ]]; then
+                print_status "Symlinking $(basename "$existing_so") -> $target_name"
+                ln -sf "$(basename "$existing_so")" "$target_path"
+            fi
+
+            # Verify the fix worked
+            if chroot "$MOUNT_ROOT" python3 -c "import apt_pkg" 2>/dev/null; then
+                print_success "apt_pkg module fixed"
+            else
+                print_warn "apt_pkg still not loadable — update-grub may show warnings"
+            fi
+        else
+            print_warn "No apt_pkg .so found on the installed system"
+            print_warn "update-grub may show Python import errors (usually non-fatal)"
+        fi
+    }
+    fix_apt_pkg
+
     # Determine the grub-install command based on firmware type
     local grub_install_cmd
     if "$IS_EFI"; then
