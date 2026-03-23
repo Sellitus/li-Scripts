@@ -132,8 +132,14 @@ if [[ $basicChoice == "y" ]]; then
 
 	# Install VSCode plugins
 	"$CODE" --install-extension anthropic.claude-code
-	"$CODE" --install-extension ms-python.python
 	"$CODE" --install-extension golang.go
+	"$CODE" --install-extension google.geminicodeassist
+	"$CODE" --install-extension ms-python.debugpy
+	"$CODE" --install-extension ms-python.python
+	"$CODE" --install-extension ms-python.vscode-pylance
+	"$CODE" --install-extension ms-python.vscode-python-envs
+	"$CODE" --install-extension rooveterinaryinc.roo-cline
+	"$CODE" --install-extension saoudrizwan.claude-dev
 
 	# Add new settings
 	mkdir -p "$HOME/Library/Application Support/Code/User"
