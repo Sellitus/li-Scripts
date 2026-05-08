@@ -789,7 +789,46 @@ EOL
     # Add user to docker group
     usermod -aG docker "$username"
     print_success "User added to docker group"
-    
+
+    # Configure Docker auto-cleanup (BuildKit GC + daily prune timer)
+    print_status "Configuring Docker auto-cleanup..."
+    command -v jq >/dev/null 2>&1 || apt install -y jq
+    mkdir -p /etc/docker
+    docker_gc_config='{"builder":{"gc":{"enabled":true,"defaultKeepStorage":"20GB","policy":[{"keepStorage":"10GB","filter":["unused-for=48h"]},{"keepStorage":"20GB"}]}}}'
+    if [ -s /etc/docker/daemon.json ]; then
+        jq -s '.[0] * .[1]' /etc/docker/daemon.json <(echo "$docker_gc_config") > /etc/docker/daemon.json.new \
+            && mv /etc/docker/daemon.json.new /etc/docker/daemon.json
+    else
+        echo "$docker_gc_config" | jq '.' > /etc/docker/daemon.json
+    fi
+    cat > /etc/systemd/system/docker-prune.service <<'EOF'
+[Unit]
+Description=Prune unused Docker images and stopped containers older than 168h
+Wants=docker.service
+After=docker.service
+ConditionPathExists=/var/run/docker.sock
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker system prune -af --filter until=168h
+EOF
+    cat > /etc/systemd/system/docker-prune.timer <<'EOF'
+[Unit]
+Description=Daily Docker prune (images/containers >168h)
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now docker-prune.timer
+    systemctl restart docker
+    print_success "Docker auto-cleanup configured (build cache 48h, images/containers 168h)"
+
     # Install Kubernetes tools
     print_status "Installing Kubernetes tools..."
     
