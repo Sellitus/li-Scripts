@@ -314,21 +314,34 @@ install_python() {
     # Add deadsnakes PPA manually (add-apt-repository fails with Python 3.14 due to apt_pkg)
     print_status "Adding deadsnakes PPA manually..."
 
-    # Remove existing keyring if present (prevents overwrite prompt)
-    rm -f /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+    local codename deadsnakes_url
+    codename=$(lsb_release -cs)
+    deadsnakes_url="https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu"
 
-    # Add GPG key
-    if ! gpg --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 2>/dev/null; then
-        print_warning "Failed to import PPA GPG key via keyserver, trying alternative method..."
-        curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xBA6932366A755776" | gpg --dearmor -o /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+    # Skip if deadsnakes has no packages for this Ubuntu release yet (e.g., resolute)
+    if curl -fsSL --max-time 15 -o /dev/null "${deadsnakes_url}/dists/${codename}/InRelease"; then
+        # Remove existing keyring if present (prevents overwrite prompt)
+        rm -f /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+
+        # Add GPG key
+        if ! gpg --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 2>/dev/null; then
+            print_warning "Failed to import PPA GPG key via keyserver, trying alternative method..."
+            curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xBA6932366A755776" | gpg --dearmor -o /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+        else
+            gpg --export F23C5A6CF475977595C89F51BA6932366A755776 | gpg --dearmor -o /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+        fi
+
+        # Add repository (HTTPS, launchpadcontent host)
+        echo "deb [signed-by=/usr/share/keyrings/deadsnakes-ppa-keyring.gpg] ${deadsnakes_url} ${codename} main" | tee /etc/apt/sources.list.d/deadsnakes-ppa.list > /dev/null
+
+        print_success "Deadsnakes PPA added manually"
     else
-        gpg --export F23C5A6CF475977595C89F51BA6932366A755776 | gpg --dearmor -o /usr/share/keyrings/deadsnakes-ppa-keyring.gpg
+        # Disable any prior deadsnakes source so apt update doesn't error on it
+        for f in /etc/apt/sources.list.d/deadsnakes-ppa.list /etc/apt/sources.list.d/deadsnakes-ppa.sources; do
+            [ -f "$f" ] && mv "$f" "${f}.disabled"
+        done
+        print_warning "Deadsnakes PPA has no packages for '${codename}'; using system-provided Python ${python_version}"
     fi
-
-    # Add repository
-    echo "deb [signed-by=/usr/share/keyrings/deadsnakes-ppa-keyring.gpg] http://ppa.launchpad.net/deadsnakes/ppa/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/deadsnakes-ppa.list > /dev/null
-
-    print_success "Deadsnakes PPA added manually"
 
     apt-get update -qq
     
@@ -1440,10 +1453,10 @@ if [[ $guiChoice == "y" ]]; then
     print_status "Adding application repositories..."
 
     # Sublime Text
-    # Remove existing keyring if present (prevents overwrite prompt)
-    rm -f /etc/apt/trusted.gpg.d/sublimehq-archive.gpg
-    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor | tee /etc/apt/trusted.gpg.d/sublimehq-archive.gpg > /dev/null
-    echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list
+    # Remove any prior keyring location (legacy global trust dir) and write to /usr/share/keyrings for deb822-compatible Signed-By
+    rm -f /etc/apt/trusted.gpg.d/sublimehq-archive.gpg /usr/share/keyrings/sublimehq-archive-keyring.gpg
+    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor -o /usr/share/keyrings/sublimehq-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/sublimehq-archive-keyring.gpg] https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list > /dev/null
     
     # Install GUI packages
     print_status "Installing GUI applications..."
