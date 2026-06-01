@@ -382,13 +382,6 @@ install_python() {
         fi
     fi
     
-    # Install pipx
-    if apt-get install -y pipx; then
-        print_success "pipx installed"
-    else
-        print_warning "Failed to install pipx"
-    fi
-    
     print_success "Python ${python_version} setup complete"
 }
 
@@ -641,6 +634,12 @@ activate() {
     source "${1:-venv}/bin/activate"
 }
 
+# faster-whisper (library): create a local .venv here with faster-whisper installed via uv
+whisper-lib() {
+    uv venv --python 3.12 && uv pip install faster-whisper "$@" && \
+        echo "faster-whisper ready in .venv -- activate with: source .venv/bin/activate"
+}
+
 # Enable programmable completion
 if ! shopt -oq posix; then
   if [ -f /usr/share/bash-completion/bash_completion ]; then
@@ -658,11 +657,8 @@ export NVM_DIR="$HOME/.nvm"
 # Go
 export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 
-# Local binaries and pip/pipx
+# User-local binaries (pip --user, uv, uv tools)
 export PATH=$HOME/.local/bin:$PATH
-
-# Pipx
-export PATH="$PATH:/home/$USER/.local/bin"
 
 # FZF
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
@@ -745,11 +741,28 @@ EOL
     # Install Python
     install_python
     
-    # Install pipx for user
-    if command -v pipx &> /dev/null; then
-        sudo -u $username pipx ensurepath || true
+    # Install uv (fast Python package/tool manager) for the user.
+    # Replaces pipx for isolated CLI tools; pip/pip3 stay available as a fallback.
+    print_status "Installing uv..."
+    sudo -u "$username" env HOME="/home/$username" INSTALLER_NO_MODIFY_PATH=1 bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' || print_warning "uv installation may have failed"
+    if [ -x "/home/$username/.local/bin/uv" ]; then
+        # Expose uv system-wide (mirrors the zoxide/starship pattern below)
+        cp /home/$username/.local/bin/uv /usr/local/bin/ 2>/dev/null || true
+        cp /home/$username/.local/bin/uvx /usr/local/bin/ 2>/dev/null || true
+        print_success "uv installed ($(/usr/local/bin/uv --version 2>/dev/null))"
+    else
+        print_warning "uv binary not found after installation"
     fi
-    
+
+    # Install faster-whisper CLI (whisper-ctranslate2) as an isolated uv tool.
+    # Pinned to Python 3.12 for ctranslate2 wheel availability; uv fetches it if missing.
+    # CPU works out of the box; GPU needs an NVIDIA card with CUDA 12 + cuDNN 9.
+    print_status "Installing faster-whisper CLI (whisper-ctranslate2) via uv..."
+    sudo -u "$username" env HOME="/home/$username" PATH="/home/$username/.local/bin:/usr/local/bin:$PATH" \
+        uv tool install --python 3.12 whisper-ctranslate2 \
+        && print_success "whisper-ctranslate2 installed (run: whisper-ctranslate2 --help)" \
+        || print_warning "whisper-ctranslate2 installation failed (check network / Python build)"
+
     # Install Node.js via NVM
     print_status "Installing Node.js via NVM..."
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | sudo -u $username bash
@@ -1742,6 +1755,7 @@ $(
 Key Information:
 - Main user: $username
 - Python version: $(python3 --version)
+- uv version: $(uv --version 2>/dev/null || echo "Not installed")
 - Node.js version: $(sudo -u $username bash -c 'source ~/.nvm/nvm.sh && node --version' 2>/dev/null || echo "Not installed")
 - Go version: $(go version 2>/dev/null || echo "Not installed")
 - Docker version: $(docker --version 2>/dev/null || echo "Not installed")

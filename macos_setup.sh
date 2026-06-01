@@ -4,7 +4,7 @@
 
 # User editable options
 brewApps="python@3.13 neovim lazygit coreutils"
-brewTools="wget curl jq yq tree htop tmux watch gh"
+brewTools="wget curl jq yq tree htop tmux watch gh uv"
 devApps="go cmake protobuf postgresql redis sqlite ffmpeg watchman"
 vramLimitMB="114688"
 
@@ -112,6 +112,15 @@ if [[ $basicChoice == "y" ]]; then
 	grep -qxF 'alias pip=/opt/homebrew/bin/pip3.13' ~/.bashrc 2>/dev/null || echo "alias pip=/opt/homebrew/bin/pip3.13" >> ~/.bashrc
 	grep -qxF 'alias python3=/opt/homebrew/bin/python3.13' ~/.bashrc 2>/dev/null || echo "alias python3=/opt/homebrew/bin/python3.13" >> ~/.bashrc
 	grep -qxF 'alias pip3=/opt/homebrew/bin/pip3.13' ~/.bashrc 2>/dev/null || echo "alias pip3=/opt/homebrew/bin/pip3.13" >> ~/.bashrc
+
+	# Install faster-whisper CLI (whisper-ctranslate2) as an isolated uv tool.
+	# Pinned to Python 3.12 for ctranslate2 wheel availability; uv fetches it if missing.
+	# Apple Silicon runs CPU-only (CTranslate2 has no Metal/GPU backend).
+	uv tool install --python 3.12 whisper-ctranslate2
+
+	# faster-whisper (library) helper: create a local .venv here with faster-whisper via uv
+	whisperLibFn='whisper-lib() { uv venv --python 3.12 && uv pip install faster-whisper "$@" && echo "faster-whisper ready in .venv -- activate with: source .venv/bin/activate"; }'
+	grep -qxF "$whisperLibFn" ~/.bashrc 2>/dev/null || echo "$whisperLibFn" >> ~/.bashrc
 
 	# Install LunarVim Prereqs
 	brew install python node
